@@ -1,10 +1,11 @@
 import { motion } from 'motion/react';
 import {
-  BookOpen, Megaphone, Package, Eye, Bell, FileText, Star,
-  Paperclip, AlertCircle, Check, Download, Image as ImageIcon, ChevronRight
+  BookOpen, Megaphone, Package, Eye, Bell, FileText, Star, User,
+  Paperclip, AlertCircle, Check, Download, Image as ImageIcon,
 } from 'lucide-react';
 import type { Entry, EntryType } from './data';
-import { entryTypeConfig } from './data';
+import { entryTypeConfig, getStudentName, shortSectionLabel } from './data';
+import { CTA_GRADIENT } from './uiStyles';
 
 const ICONS: Record<EntryType, React.ElementType> = {
   tarea: BookOpen,
@@ -14,34 +15,34 @@ const ICONS: Record<EntryType, React.ElementType> = {
   recordatorio: Bell,
   examen: FileText,
   evento: Star,
+  nota_personal: User,
+  personalizado: User,
 };
 
 interface EntryCardProps {
   entry: Entry;
   userId: string;
   onConfirmRead?: (entryId: string) => void;
+  onPress?: (entry: Entry) => void;
   isReadOnly?: boolean;
   compact?: boolean;
+  showAudienceBadge?: boolean;
 }
 
-export function EntryCard({ entry, userId, onConfirmRead, isReadOnly = false, compact = false }: EntryCardProps) {
+export function EntryCard({ entry, userId, onConfirmRead, onPress, isReadOnly = false, compact = false, showAudienceBadge = false }: EntryCardProps) {
   const Icon = ICONS[entry.type];
   const isRead = entry.readBy.includes(userId);
   const config = entryTypeConfig[entry.type];
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="rounded-3xl overflow-hidden"
-      style={{
-        backgroundColor: 'var(--card)',
-        boxShadow: '0 1px 12px rgba(26,23,64,0.06)',
-        border: entry.isImportant
-          ? '1.5px solid rgba(26,23,64,0.15)'
-          : '1px solid var(--border)',
-      }}
-    >
+  const cardStyle = {
+    backgroundColor: 'var(--card)',
+    boxShadow: '0 1px 12px rgba(26,23,64,0.06)',
+    border: entry.isImportant
+      ? '1.5px solid rgba(26,23,64,0.15)'
+      : '1px solid var(--border)',
+  };
+
+  const cardContent = (
       <div className="p-4">
         {/* Header */}
         <div className="flex items-start gap-3">
@@ -49,10 +50,25 @@ export function EntryCard({ entry, userId, onConfirmRead, isReadOnly = false, co
 
           <div className="flex-1 min-w-0">
             {/* Type label + important — minimal */}
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className="text-[11px]" style={{ color: 'var(--primary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.4 }}>
                 {config.label}
               </span>
+              {entry.type === 'nota_personal' && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)', fontWeight: 700 }}>
+                  Personal
+                </span>
+              )}
+              {showAudienceBadge && entry.studentId && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)', fontWeight: 700 }}>
+                  Para: {getStudentName(entry.studentId)}
+                </span>
+              )}
+              {showAudienceBadge && !entry.studentId && entry.type !== 'nota_personal' && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)', fontWeight: 700 }}>
+                  {shortSectionLabel(entry.section)}
+                </span>
+              )}
               {entry.isImportant && (
                 <span className="flex items-center gap-0.5 text-[10px]" style={{ color: 'var(--foreground)', fontWeight: 700 }}>
                   <AlertCircle size={10} strokeWidth={2.5} /> Importante
@@ -100,7 +116,7 @@ export function EntryCard({ entry, userId, onConfirmRead, isReadOnly = false, co
 
         {/* Confirm read */}
         {isReadOnly && entry.type === 'comunicado' && !compact && (
-          <div className="mt-3">
+          <div className="mt-3 flex justify-end">
             {isRead ? (
               <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--muted-foreground)', fontWeight: 600 }}>
                 <Check size={12} strokeWidth={2.5} /> Lectura confirmada
@@ -108,9 +124,9 @@ export function EntryCard({ entry, userId, onConfirmRead, isReadOnly = false, co
             ) : (
               <motion.button
                 whileTap={{ scale: 0.96 }}
-                onClick={() => onConfirmRead?.(entry.id)}
+                onClick={(e) => { e.stopPropagation(); onConfirmRead?.(entry.id); }}
                 className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl"
-                style={{ background: 'linear-gradient(135deg, #6C4FE8 0%, #B47FFF 100%)', color: '#ffffff', fontWeight: 700 }}
+                style={{ background: CTA_GRADIENT, color: '#ffffff', fontWeight: 700 }}
               >
                 <Check size={12} strokeWidth={2.5} /> Confirmar lectura
               </motion.button>
@@ -140,6 +156,32 @@ export function EntryCard({ entry, userId, onConfirmRead, isReadOnly = false, co
           </div>
         </div>
       </div>
+  );
+
+  if (onPress) {
+    return (
+      <motion.button
+        type="button"
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => onPress(entry)}
+        className="w-full rounded-3xl overflow-hidden text-left"
+        style={cardStyle}
+      >
+        {cardContent}
+      </motion.button>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-3xl overflow-hidden"
+      style={cardStyle}
+    >
+      {cardContent}
     </motion.div>
   );
 }

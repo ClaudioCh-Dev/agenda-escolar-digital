@@ -1,11 +1,12 @@
 import { motion } from 'motion/react';
-import { BookOpen, Megaphone, Package, Eye, Bell, FileText, Star, Check, CheckCheck } from 'lucide-react';
+import { BookOpen, Megaphone, Package, Eye, Bell, FileText, Star, Check, CheckCheck, User, ChevronLeft } from 'lucide-react';
 import type { AppNotification, EntryType } from './data';
 
 interface NotificacionesProps {
   notifications: AppNotification[];
   onMarkRead: (id: string) => void;
   onMarkAllRead: () => void;
+  onClose: () => void;
 }
 
 const ICONS: Record<EntryType, React.ElementType> = {
@@ -16,6 +17,8 @@ const ICONS: Record<EntryType, React.ElementType> = {
   recordatorio: Bell,
   examen: FileText,
   evento: Star,
+  nota_personal: User,
+  personalizado: User,
 };
 
 const TYPE_LABEL: Record<EntryType, string> = {
@@ -26,6 +29,8 @@ const TYPE_LABEL: Record<EntryType, string> = {
   recordatorio: 'Recordatorio',
   examen: 'Examen',
   evento: 'Evento',
+  nota_personal: 'Nota personal',
+  personalizado: 'Personalizado',
 };
 
 function formatTime(timestamp: string): string {
@@ -38,7 +43,7 @@ function formatTime(timestamp: string): string {
   return `${d.getDate()}/${d.getMonth() + 1}`;
 }
 
-export function Notificaciones({ notifications, onMarkRead, onMarkAllRead }: NotificacionesProps) {
+export function Notificaciones({ notifications, onMarkRead, onMarkAllRead, onClose }: NotificacionesProps) {
   const unreadCount = notifications.filter(n => !n.isRead).length;
   const todayNotifs = notifications.filter(n => n.timestamp.startsWith('2026-06-13'));
   const olderNotifs = notifications.filter(n => !n.timestamp.startsWith('2026-06-13'));
@@ -48,24 +53,35 @@ export function Notificaciones({ notifications, onMarkRead, onMarkAllRead }: Not
       {/* Header */}
       <div
         className="px-5 pt-12 pb-4"
-        style={{ backgroundColor: 'var(--card)', borderBottom: '1px solid var(--border)' }}
+        style={{ backgroundColor: 'var(--card)', borderBottom: '1px solid var(--border)', boxShadow: '0 2px 16px rgba(26,23,64,0.05)' }}
       >
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 style={{ fontWeight: 900, fontSize: 22, color: 'var(--foreground)', letterSpacing: -0.5 }}>
-              Notificaciones
-            </h1>
-            {unreadCount > 0 && (
-              <p className="text-sm mt-0.5" style={{ color: 'var(--muted-foreground)', fontWeight: 600 }}>
-                {unreadCount} sin leer
-              </p>
-            )}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Volver"
+              className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: 'var(--muted)' }}
+            >
+              <ChevronLeft size={20} style={{ color: 'var(--muted-foreground)' }} />
+            </button>
+            <div className="min-w-0">
+              <h1 style={{ fontWeight: 900, fontSize: 20, color: 'var(--foreground)', letterSpacing: -0.5 }}>
+                Notificaciones
+              </h1>
+              {unreadCount > 0 && (
+                <p className="text-sm mt-0.5" style={{ color: 'var(--muted-foreground)', fontWeight: 600 }}>
+                  {unreadCount} sin leer
+                </p>
+              )}
+            </div>
           </div>
           {unreadCount > 0 && (
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={onMarkAllRead}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-sm"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-sm flex-shrink-0"
               style={{ backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)', fontWeight: 700 }}
             >
               <CheckCheck size={14} strokeWidth={1.8} /> Marcar todo
@@ -74,7 +90,7 @@ export function Notificaciones({ notifications, onMarkRead, onMarkAllRead }: Not
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-24">
+      <div className="flex-1 overflow-y-auto pb-6">
         {notifications.length === 0 ? (
           <div className="flex flex-col items-center py-24 text-center px-8">
             <div
@@ -123,7 +139,7 @@ export function Notificaciones({ notifications, onMarkRead, onMarkAllRead }: Not
                           {!notif.isRead && (
                             <span
                               className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full"
-                              style={{ background: 'linear-gradient(135deg, #6C4FE8 0%, #B47FFF 100%)' }}
+                              style={{ backgroundColor: 'var(--primary)' }}
                             />
                           )}
                         </div>
@@ -187,7 +203,7 @@ export function Notificaciones({ notifications, onMarkRead, onMarkAllRead }: Not
                           className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 mt-0.5"
                           style={{ backgroundColor: 'var(--muted)' }}
                         >
-                          <Icon size={18} style={{ color: 'var(--muted-foreground)' }} strokeWidth={1.8} />
+                          <Icon size={18} style={{ color: 'var(--primary)' }} strokeWidth={1.8} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm" style={{ fontWeight: 600, color: 'var(--foreground)' }}>

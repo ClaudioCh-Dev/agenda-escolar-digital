@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { ChevronLeft, Send, MessageCircle } from 'lucide-react';
 import type { Conversation, User, Screen } from './data';
+import { CTA_GRADIENT, CTA_SHADOW_SM } from './uiStyles';
 
 interface ChatScreenProps {
   user: User;
@@ -126,7 +127,7 @@ export function ChatScreen({ user, conversations, onNavigate, onSendMessage }: C
             onClick={handleSend}
             disabled={!messageText.trim()}
             className="w-11 h-11 rounded-2xl flex items-center justify-center disabled:opacity-40"
-            style={{ background: 'linear-gradient(135deg, #6C4FE8 0%, #B47FFF 100%)', boxShadow: '0 4px 16px rgba(108,79,232,0.28)' }}
+            style={{ background: CTA_GRADIENT, boxShadow: CTA_SHADOW_SM }}
           >
             <Send size={18} style={{ color: 'var(--primary-foreground)' }} />
           </motion.button>
@@ -171,7 +172,7 @@ export function ChatScreen({ user, conversations, onNavigate, onSendMessage }: C
                 {conv.unreadCount > 0 && (
                   <span
                     className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white border-2 border-background"
-                    style={{ backgroundColor: '#6C63FF', fontSize: 10, fontWeight: 900 }}
+                    style={{ backgroundColor: 'var(--primary)', fontSize: 10, fontWeight: 900 }}
                   >
                     {conv.unreadCount}
                   </span>

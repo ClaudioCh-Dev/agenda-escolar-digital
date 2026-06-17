@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, GraduationCap } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, GraduationCap, ClipboardList, Users } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import type { User } from './data';
 import { MOCK_USERS } from './data';
+import { CTA_GRADIENT, CTA_SHADOW, HERO_GRADIENT } from './uiStyles';
 
 interface LoginScreenProps {
   onLogin: (user: User) => void;
 }
 
-const DEMO_ACCOUNTS = [
-  { label: 'Auxiliar',  email: 'auxiliar@colegio.edu', emoji: '👩‍🏫' },
-  { label: 'Padre',     email: 'padre@colegio.edu',    emoji: '👨‍👩‍👧' },
-  { label: 'Alumno',    email: 'alumno@colegio.edu',   emoji: '🎒' },
+const DEMO_ACCOUNTS: { label: string; email: string; icon: LucideIcon }[] = [
+  { label: 'Auxiliar', email: 'auxiliar@colegio.edu', icon: ClipboardList },
+  { label: 'Padre', email: 'padre@colegio.edu', icon: Users },
+  { label: 'Alumno', email: 'alumno@colegio.edu', icon: GraduationCap },
 ];
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
@@ -47,7 +49,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
         className="relative flex flex-col items-center justify-end px-8 pb-14 flex-shrink-0"
         style={{
           height: 260,
-          background: 'linear-gradient(145deg, #6C4FE8 0%, #9B7BFF 100%)',
+          background: HERO_GRADIENT,
         }}
       >
         {/* Background circles */}
@@ -172,11 +174,11 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
             whileTap={{ scale: 0.97 }}
             className="w-full py-4 rounded-2xl flex items-center justify-center gap-2.5 disabled:opacity-60"
             style={{
-              background: 'linear-gradient(135deg, #6C4FE8 0%, #B47FFF 100%)',
+              background: CTA_GRADIENT,
               color: '#ffffff',
               fontWeight: 800,
               fontSize: 16,
-              boxShadow: '0 8px 24px rgba(108,79,232,0.30)',
+              boxShadow: CTA_SHADOW,
             }}
           >
             {isLoading
@@ -195,7 +197,9 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
         {/* Demo pills */}
         <div className="grid grid-cols-3 gap-2.5">
-          {DEMO_ACCOUNTS.map(acc => (
+          {DEMO_ACCOUNTS.map(acc => {
+            const Icon = acc.icon;
+            return (
             <motion.button
               key={acc.email}
               onClick={() => handleDemoLogin(acc.email)}
@@ -206,10 +210,11 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                 border: '1px solid var(--border)',
               }}
             >
-              <span style={{ fontSize: 24 }}>{acc.emoji}</span>
+              <Icon size={28} strokeWidth={1.75} style={{ color: 'var(--primary)' }} />
               <span className="text-xs" style={{ color: 'var(--foreground)', fontWeight: 800 }}>{acc.label}</span>
             </motion.button>
-          ))}
+            );
+          })}
         </div>
 
         <p className="text-center text-xs mt-5" style={{ color: 'var(--muted-foreground)' }}>

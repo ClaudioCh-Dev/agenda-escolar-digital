@@ -1,13 +1,19 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import { LogOut, Bell, Moon, Sun, ChevronRight, Shield, GraduationCap, Settings, HelpCircle, BookOpen, Mail, Clock } from 'lucide-react';
-import type { User as UserType } from './data';
+import type { User as UserType, Screen } from './data';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { SoftStairBarsBackground } from './SoftStairBarsBackground';
+import { CTA_GRADIENT } from './uiStyles';
 
 interface PerfilProps {
   user: UserType;
   darkMode: boolean;
   onToggleDark: () => void;
   onLogout: () => void;
+  onNavigate: (screen: Screen) => void;
+  onOpenEnConstruccion: (title: string) => void;
+  unreadNotifications: number;
 }
 
 const ROLE_LABEL = {
@@ -16,7 +22,7 @@ const ROLE_LABEL = {
   alumno:   'Alumno',
 };
 
-export function Perfil({ user, darkMode, onToggleDark, onLogout }: PerfilProps) {
+export function Perfil({ user, darkMode, onToggleDark, onLogout, onNavigate, onOpenEnConstruccion, unreadNotifications }: PerfilProps) {
   const [notifications, setNotifications] = useState({ push: true, email: false, reminders: true });
 
   const Toggle = ({ value, onChange }: { value: boolean; onChange: () => void }) => (
@@ -35,23 +41,61 @@ export function Perfil({ user, darkMode, onToggleDark, onLogout }: PerfilProps) 
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: 'var(--background)' }}>
+      <div
+        className="px-5 pt-12 pb-4 flex-shrink-0"
+        style={{ backgroundColor: 'var(--card)', borderBottom: '1px solid var(--border)' }}
+      >
+        <div className="flex items-center justify-between">
+          <h1 style={{ fontWeight: 900, fontSize: 22, color: 'var(--foreground)', letterSpacing: -0.5 }}>
+            Perfil
+          </h1>
+          <button
+            type="button"
+            onClick={() => onNavigate('notificaciones')}
+            aria-label="Notificaciones"
+            className="relative w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: 'var(--muted)' }}
+          >
+            <Bell size={20} strokeWidth={1.8} style={{ color: 'var(--muted-foreground)' }} />
+            {unreadNotifications > 0 && (
+              <span
+                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center border-2 border-card"
+                style={{ backgroundColor: 'var(--destructive)', fontSize: 9, fontWeight: 800, color: '#ffffff' }}
+              >
+                {unreadNotifications > 9 ? '9+' : unreadNotifications}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
       <div className="flex-1 overflow-y-auto pb-24">
 
         {/* Avatar + name block */}
-        <div className="px-5 pt-12 pb-5">
+        <div className="px-5 pt-4 pb-5">
           <div
-            className="p-5 rounded-3xl"
+            className="p-5 rounded-3xl relative overflow-hidden"
             style={{ backgroundColor: 'var(--card)', boxShadow: '0 2px 16px rgba(26,23,64,0.07)', border: '1px solid var(--border)' }}
           >
-            <div className="flex items-center gap-4 mb-5">
-              {/* Monochrome avatar */}
-              <div
-                className="w-16 h-16 rounded-3xl flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: 'var(--foreground)', color: 'var(--primary-foreground)', fontWeight: 900, fontSize: 22 }}
-              >
-                {user.initials}
+            <SoftStairBarsBackground topRightAccent bottomLeftAccent />
+            <div className="relative z-10">
+            <div className="flex items-center mb-5 min-h-16">
+              <div className="flex w-24 shrink-0 items-center justify-center">
+                <Avatar className="w-16 h-16 rounded-3xl shrink-0">
+                  <AvatarImage
+                    src={user.avatar}
+                    alt={user.name}
+                    className="rounded-3xl object-cover"
+                  />
+                  <AvatarFallback
+                    className="rounded-3xl"
+                    style={{ backgroundColor: 'var(--foreground)', color: 'var(--primary-foreground)', fontWeight: 900, fontSize: 22 }}
+                  >
+                    {user.initials}
+                  </AvatarFallback>
+                </Avatar>
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex flex-1 min-w-0 flex-col items-center justify-center text-center">
                 <h1 style={{ fontWeight: 900, fontSize: 20, color: 'var(--foreground)', letterSpacing: -0.5, lineHeight: 1.2 }}>
                   {user.name}
                 </h1>
@@ -73,9 +117,9 @@ export function Perfil({ user, darkMode, onToggleDark, onLogout }: PerfilProps) 
               style={{ borderTop: '1px solid var(--border)' }}
             >
               {[
-                { label: 'Sección', value: user.role === 'auxiliar' ? '3° A' : user.children?.[0]?.grade.split(' ')[0] || '3°' },
+                { label: 'Secciones', value: user.sections?.length ?? (user.section ? 1 : 0) },
                 { label: 'Año', value: '2026' },
-                { label: user.children ? 'Hijos' : 'Grado', value: user.children?.length ?? (user.role === 'alumno' ? '3°' : 1) },
+                { label: user.children ? 'Hijos' : 'Grado', value: user.children?.length ?? (user.role === 'alumno' ? user.section?.split(' ')[0] ?? '—' : 1) },
               ].map((s, i, arr) => (
                 <div
                   key={s.label}
@@ -86,6 +130,7 @@ export function Perfil({ user, darkMode, onToggleDark, onLogout }: PerfilProps) 
                   <p className="text-xs mt-1" style={{ color: 'var(--muted-foreground)', fontWeight: 600 }}>{s.label}</p>
                 </div>
               ))}
+            </div>
             </div>
           </div>
         </div>
@@ -106,7 +151,21 @@ export function Perfil({ user, darkMode, onToggleDark, onLogout }: PerfilProps) 
         )}
 
         {/* Section */}
-        {user.section && (
+        {user.sections && user.sections.length > 0 && (
+          <Section label="SECCIONES ASIGNADAS">
+            {user.sections.map((sec, i, arr) => (
+              <Row
+                key={sec}
+                icon={<GraduationCap size={16} strokeWidth={1.8} style={{ color: 'var(--primary)' }} />}
+                label={sec.split(' – ')[0]}
+                sub={sec}
+                last={i === arr.length - 1}
+              />
+            ))}
+          </Section>
+        )}
+
+        {user.section && !user.sections && (
           <Section label="SECCIÓN ASIGNADA">
             <Row
               icon={<GraduationCap size={16} strokeWidth={1.8} style={{ color: 'var(--primary)' }} />}
@@ -160,9 +219,9 @@ export function Perfil({ user, darkMode, onToggleDark, onLogout }: PerfilProps) 
 
         {/* More */}
         <Section label="MÁS">
-          <Row icon={<Shield size={16} strokeWidth={1.8} style={{ color: 'var(--primary)' }} />} label="Cambiar contraseña" chevron />
-          <Row icon={<Settings size={16} strokeWidth={1.8} style={{ color: 'var(--primary)' }} />} label="Configuración general" chevron />
-          <Row icon={<HelpCircle size={16} strokeWidth={1.8} style={{ color: 'var(--primary)' }} />} label="Centro de ayuda" chevron last />
+          <Row icon={<Shield size={16} strokeWidth={1.8} style={{ color: 'var(--primary)' }} />} label="Cambiar contraseña" chevron onClick={() => onNavigate('cambiar-contrasena')} />
+          <Row icon={<Settings size={16} strokeWidth={1.8} style={{ color: 'var(--primary)' }} />} label="Configuración general" chevron onClick={() => onOpenEnConstruccion('Configuración general')} />
+          <Row icon={<HelpCircle size={16} strokeWidth={1.8} style={{ color: 'var(--primary)' }} />} label="Centro de ayuda" chevron last onClick={() => onOpenEnConstruccion('Centro de ayuda')} />
         </Section>
 
         {/* Version */}
@@ -216,19 +275,17 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 }
 
 function Row({
-  icon, label, sub, chevron = false, last = false,
+  icon, label, sub, chevron = false, last = false, onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   sub?: string;
   chevron?: boolean;
   last?: boolean;
+  onClick?: () => void;
 }) {
-  return (
-    <div
-      className="flex items-center gap-3.5 px-4 py-3.5"
-      style={{ borderBottom: last ? 'none' : '1px solid var(--border)' }}
-    >
+  const content = (
+    <>
       <div
         className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
         style={{ backgroundColor: 'var(--muted)' }}
@@ -240,6 +297,28 @@ function Row({
         {sub && <p className="text-xs" style={{ color: 'var(--muted-foreground)', fontWeight: 500 }}>{sub}</p>}
       </div>
       {chevron && <ChevronRight size={15} strokeWidth={1.8} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />}
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left"
+        style={{ borderBottom: last ? 'none' : '1px solid var(--border)' }}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className="flex items-center gap-3.5 px-4 py-3.5"
+      style={{ borderBottom: last ? 'none' : '1px solid var(--border)' }}
+    >
+      {content}
     </div>
   );
 }
@@ -272,7 +351,7 @@ function ToggleRow({
       <button
         onClick={onChange}
         className="w-11 h-6 rounded-full transition-colors relative flex-shrink-0"
-        style={{ background: value ? 'linear-gradient(135deg, #6C4FE8 0%, #B47FFF 100%)' : 'var(--muted)' }}
+        style={{ background: value ? CTA_GRADIENT : 'var(--muted)' }}
       >
         <motion.div
           animate={{ x: value ? 22 : 2 }}

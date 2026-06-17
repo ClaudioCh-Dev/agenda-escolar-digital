@@ -1,5 +1,5 @@
 export type Role = 'auxiliar' | 'padre' | 'alumno';
-export type EntryType = 'tarea' | 'comunicado' | 'material' | 'observacion' | 'recordatorio' | 'examen' | 'evento';
+export type EntryType = 'tarea' | 'comunicado' | 'material' | 'observacion' | 'recordatorio' | 'examen' | 'evento' | 'nota_personal' | 'personalizado';
 export type Screen =
   | 'login'
   | 'dashboard'
@@ -9,6 +9,8 @@ export type Screen =
   | 'nueva-anotacion'
   | 'chat'
   | 'perfil'
+  | 'cambiar-contrasena'
+  | 'en-construccion'
   | 'chat-thread';
 
 export interface Attachment {
@@ -29,15 +31,48 @@ export interface Entry {
   readBy: string[];
   author: string;
   section: string;
+  studentId?: string;
 }
+
+export type SchoolCalendarEventType = 'festivo' | 'examen' | 'reunion' | 'actuacion' | 'evento';
 
 export interface CalendarEvent {
   id: string;
   title: string;
+  description?: string;
   date: string;
-  type: 'festivo' | 'examen' | 'reunion' | 'actuacion' | 'evento' | 'tarea';
+  type: SchoolCalendarEventType | 'tarea';
   color: string;
 }
+
+export const SCHOOL_CALENDAR_EVENT_TYPES: SchoolCalendarEventType[] = [
+  'festivo',
+  'examen',
+  'reunion',
+  'actuacion',
+  'evento',
+];
+
+const CALENDAR_EVENT_DOT_COLORS: Record<CalendarEvent['type'], string> = {
+  festivo: '#0284C7',
+  examen: '#FF5C72',
+  reunion: '#C026D3',
+  actuacion: '#7C3AED',
+  evento: '#FF8B5C',
+  tarea: '#0D9488',
+};
+
+export function getCalendarEventColor(type: CalendarEvent['type']): string {
+  return CALENDAR_EVENT_DOT_COLORS[type];
+}
+
+export const calendarEventTypeLabels: Record<SchoolCalendarEventType, string> = {
+  festivo: 'Día festivo',
+  examen: 'Examen',
+  reunion: 'Reunión',
+  actuacion: 'Actuación',
+  evento: 'Evento',
+};
 
 export interface AppNotification {
   id: string;
@@ -56,6 +91,7 @@ export interface Child {
   grade: string;
   initials: string;
   color: string;
+  avatar?: string;
 }
 
 export interface User {
@@ -66,7 +102,13 @@ export interface User {
   avatar?: string;
   initials: string;
   section?: string;
+  sections?: string[];
   children?: Child[];
+}
+
+export interface VisibilityContext {
+  selectedChildId?: string;
+  selectedSection?: string;
 }
 
 export interface Message {
@@ -91,6 +133,16 @@ export interface Conversation {
   messages: Message[];
 }
 
+/** Avatares locales en public/mock-avatars/ (versionados en git) */
+export const MOCK_AVATARS = {
+  mariaGarcia: '/mock-avatars/maria-garcia.jpg',
+  carlosRodriguez: '/mock-avatars/carlos-rodriguez.jpg',
+  anaLopez: '/mock-avatars/ana-lopez.jpg',
+  lucas: '/mock-avatars/lucas.jpg',
+  sofia: '/mock-avatars/sofia.jpg',
+  mateo: '/mock-avatars/mateo.png',
+} as const;
+
 export const MOCK_USERS: User[] = [
   {
     id: 'aux-001',
@@ -98,7 +150,8 @@ export const MOCK_USERS: User[] = [
     email: 'auxiliar@colegio.edu',
     role: 'auxiliar',
     initials: 'MG',
-    section: '3° A – Primaria',
+    avatar: MOCK_AVATARS.mariaGarcia,
+    sections: ['5° A – Primaria', '5° B – Primaria', '5° C – Primaria'],
   },
   {
     id: 'padre-001',
@@ -106,8 +159,9 @@ export const MOCK_USERS: User[] = [
     email: 'padre@colegio.edu',
     role: 'padre',
     initials: 'CR',
+    avatar: MOCK_AVATARS.carlosRodriguez,
     children: [
-      { id: 'stu-001', name: 'Lucas Rodríguez', section: '3° A – Primaria', grade: '3er Grado', initials: 'LR', color: '#4F46E5' },
+      { id: 'stu-001', name: 'Lucas Rodríguez', section: '3° A – Primaria', grade: '3er Grado', initials: 'LR', color: '#4F46E5', avatar: MOCK_AVATARS.lucas },
     ],
   },
   {
@@ -116,9 +170,10 @@ export const MOCK_USERS: User[] = [
     email: 'padre2@colegio.edu',
     role: 'padre',
     initials: 'AL',
+    avatar: MOCK_AVATARS.anaLopez,
     children: [
-      { id: 'stu-002', name: 'Sofía López', section: '3° A – Primaria', grade: '3er Grado', initials: 'SL', color: '#8B5CF6' },
-      { id: 'stu-003', name: 'Mateo López', section: '5° B – Primaria', grade: '5to Grado', initials: 'ML', color: '#10B981' },
+      { id: 'stu-002', name: 'Sofía López', section: '3° A – Primaria', grade: '3er Grado', initials: 'SL', color: '#8B5CF6', avatar: MOCK_AVATARS.sofia },
+      { id: 'stu-003', name: 'Mateo López', section: '5° B – Primaria', grade: '5to Grado', initials: 'ML', color: '#10B981', avatar: MOCK_AVATARS.mateo },
     ],
   },
   {
@@ -127,9 +182,74 @@ export const MOCK_USERS: User[] = [
     email: 'alumno@colegio.edu',
     role: 'alumno',
     initials: 'LR',
+    avatar: MOCK_AVATARS.lucas,
     section: '3° A – Primaria',
   },
 ];
+
+export const MOCK_STUDENTS: Child[] = [
+  { id: 'stu-004', name: 'Valentina Ruiz', section: '5° A – Primaria', grade: '5to Grado', initials: 'VR', color: '#F59E0B' },
+  { id: 'stu-005', name: 'Diego Pérez', section: '5° A – Primaria', grade: '5to Grado', initials: 'DP', color: '#EF4444' },
+  { id: 'stu-003', name: 'Mateo López', section: '5° B – Primaria', grade: '5to Grado', initials: 'ML', color: '#10B981', avatar: MOCK_AVATARS.mateo },
+  { id: 'stu-006', name: 'Camila Torres', section: '5° B – Primaria', grade: '5to Grado', initials: 'CT', color: '#0EA5E9' },
+  { id: 'stu-007', name: 'Juan Martínez', section: '5° C – Primaria', grade: '5to Grado', initials: 'JM', color: '#8B5CF6' },
+  { id: 'stu-008', name: 'Lucía Fernández', section: '5° C – Primaria', grade: '5to Grado', initials: 'LF', color: '#EC4899' },
+];
+
+export function getStudentName(id: string): string {
+  const fromMock = MOCK_STUDENTS.find(s => s.id === id);
+  if (fromMock) return fromMock.name;
+  for (const u of MOCK_USERS) {
+    const child = u.children?.find(c => c.id === id);
+    if (child) return child.name;
+    if (u.id === id) return u.name;
+  }
+  return 'Alumno';
+}
+
+export function getStudentsBySection(section: string): Child[] {
+  return MOCK_STUDENTS.filter(s => s.section === section);
+}
+
+export function getParentsForSection(section: string): User[] {
+  return MOCK_USERS.filter(
+    u => u.role === 'padre' && u.children?.some(c => c.section === section),
+  );
+}
+
+export function getParentsForStudent(studentId: string): User[] {
+  return MOCK_USERS.filter(
+    u => u.role === 'padre' && u.children?.some(c => c.id === studentId),
+  );
+}
+
+export function isEntryVisible(entry: Entry, user: User, context?: VisibilityContext): boolean {
+  if (user.role === 'auxiliar') {
+    const sections = user.sections ?? [];
+    if (!sections.includes(entry.section)) return false;
+    if (context?.selectedSection) return entry.section === context.selectedSection;
+    return true;
+  }
+
+  if (user.role === 'alumno') {
+    if (entry.studentId) return entry.studentId === user.id;
+    return entry.section === user.section;
+  }
+
+  if (user.role === 'padre') {
+    const childId = context?.selectedChildId ?? user.children?.[0]?.id;
+    const child = user.children?.find(c => c.id === childId) ?? user.children?.[0];
+    if (!child) return false;
+    if (entry.studentId) return entry.studentId === child.id;
+    return entry.section === child.section;
+  }
+
+  return false;
+}
+
+export function shortSectionLabel(section: string): string {
+  return section.split(' – ')[0];
+}
 
 export const TODAY = '2026-06-13';
 
@@ -239,17 +359,75 @@ export const MOCK_ENTRIES: Entry[] = [
     author: 'Sra. García',
     section: '3° A – Primaria',
   },
+  {
+    id: 'e-009',
+    type: 'tarea',
+    title: 'Historia – Línea de tiempo',
+    description: 'Completar la línea de tiempo de la Revolución de Mayo en el cuaderno.',
+    date: '2026-06-13',
+    time: '08:00',
+    isImportant: false,
+    attachments: [],
+    readBy: [],
+    author: 'Sra. García',
+    section: '5° A – Primaria',
+  },
+  {
+    id: 'e-010',
+    type: 'comunicado',
+    title: 'Salida al teatro – Solo Valentina',
+    description: 'Valentina debe presentar la autorización firmada para la salida al teatro del viernes.',
+    date: '2026-06-13',
+    time: '09:30',
+    isImportant: true,
+    attachments: [],
+    readBy: [],
+    author: 'Sra. García',
+    section: '5° A – Primaria',
+    studentId: 'stu-004',
+  },
+  {
+    id: 'e-011',
+    type: 'comunicado',
+    title: 'Reunión 5° B – Proyecto integrador',
+    description: 'Padres de 5° B: reunión el martes 17/06 a las 17:00 hs para el proyecto de Ciencias.',
+    date: '2026-06-13',
+    time: '10:00',
+    isImportant: true,
+    attachments: [],
+    readBy: [],
+    author: 'Sra. García',
+    section: '5° B – Primaria',
+  },
+  {
+    id: 'e-012',
+    type: 'nota_personal',
+    title: 'Recordatorio: traer gorra',
+    description: 'Lucas, no olvides la gorra para la actividad al aire libre del lunes.',
+    date: '2026-06-13',
+    time: '07:45',
+    isImportant: false,
+    attachments: [],
+    readBy: [],
+    author: 'Carlos Rodríguez',
+    section: '3° A – Primaria',
+    studentId: 'stu-001',
+  },
 ];
 
 export const MOCK_CALENDAR_EVENTS: CalendarEvent[] = [
-  { id: 'ce-001', title: 'Examen Ciencias', date: '2026-06-17', type: 'examen', color: '#EF4444' },
-  { id: 'ce-002', title: 'Día del Padre', date: '2026-06-18', type: 'actuacion', color: '#F59E0B' },
-  { id: 'ce-003', title: 'Reunión de Padres', date: '2026-06-20', type: 'reunion', color: '#4F46E5' },
-  { id: 'ce-004', title: 'Día Festivo', date: '2026-06-16', type: 'festivo', color: '#10B981' },
-  { id: 'ce-005', title: 'Entrega Boletines', date: '2026-06-30', type: 'evento', color: '#8B5CF6' },
-  { id: 'ce-006', title: 'Día del Deporte', date: '2026-06-25', type: 'actuacion', color: '#F59E0B' },
-  { id: 'ce-007', title: 'Examen Matemáticas', date: '2026-06-24', type: 'examen', color: '#EF4444' },
-  { id: 'ce-008', title: 'Feria de Ciencias', date: '2026-07-05', type: 'evento', color: '#8B5CF6' },
+  { id: 'ce-001', title: 'Examen Ciencias', date: '2026-06-17', type: 'examen', color: '#FF5C72' },
+  { id: 'ce-002', title: 'Día del Padre', date: '2026-06-18', type: 'actuacion', color: '#7C3AED' },
+  { id: 'ce-003', title: 'Reunión de Padres', date: '2026-06-20', type: 'reunion', color: '#C026D3' },
+  { id: 'ce-004', title: 'Día Festivo', date: '2026-06-16', type: 'festivo', color: '#0284C7' },
+  { id: 'ce-005', title: 'Entrega Boletines', date: '2026-06-30', type: 'evento', color: '#FF8B5C' },
+  { id: 'ce-009', title: 'Acto de Fin de Año', date: '2026-06-30', type: 'actuacion', color: '#7C3AED' },
+  { id: 'ce-010', title: 'Feriado Escolar', date: '2026-06-30', type: 'festivo', color: '#0284C7' },
+  { id: 'ce-011', title: 'Examen Final', date: '2026-06-30', type: 'examen', color: '#FF5C72' },
+  { id: 'ce-012', title: 'Reunión de Cierre', date: '2026-06-30', type: 'reunion', color: '#C026D3' },
+  { id: 'ce-006', title: 'Día del Deporte', date: '2026-06-25', type: 'actuacion', color: '#7C3AED' },
+  { id: 'ce-007', title: 'Examen Matemáticas', date: '2026-06-24', type: 'examen', color: '#FF5C72' },
+  { id: 'ce-008', title: 'Feria de Ciencias', date: '2026-07-05', type: 'evento', color: '#FF8B5C' },
 ];
 
 export const MOCK_NOTIFICATIONS: AppNotification[] = [
@@ -339,8 +517,10 @@ export const entryTypeConfig: Record<EntryType, { label: string; icon: string; c
   tarea: { label: 'Tarea', icon: 'BookOpen', color: '#4F46E5', bg: '#EEF2FF', darkBg: '#2D2B50' },
   comunicado: { label: 'Comunicado', icon: 'Megaphone', color: '#0EA5E9', bg: '#E0F2FE', darkBg: '#0C2E40' },
   material: { label: 'Material', icon: 'Package', color: '#F59E0B', bg: '#FEF3C7', darkBg: '#3D2E0A' },
-  observacion: { label: 'Observación', icon: 'Eye', color: '#8B5CF6', bg: '#EDE9FE', darkBg: '#2D2050' },
+  observacion: { label: 'Observación', icon: 'Eye', color: '#0D9488', bg: '#CCFBF1', darkBg: '#0A2E28' },
   recordatorio: { label: 'Recordatorio', icon: 'Bell', color: '#EC4899', bg: '#FCE7F3', darkBg: '#3D1030' },
   examen: { label: 'Examen', icon: 'FileText', color: '#EF4444', bg: '#FEE2E2', darkBg: '#3D1010' },
   evento: { label: 'Evento', icon: 'Star', color: '#10B981', bg: '#D1FAE5', darkBg: '#0A2E20' },
+  nota_personal: { label: 'Nota personal', icon: 'User', color: '#0D9488', bg: '#CCFBF1', darkBg: '#0A2E28' },
+  personalizado: { label: 'Personalizado', icon: 'User', color: '#0D9488', bg: '#CCFBF1', darkBg: '#0A2E28' },
 };
