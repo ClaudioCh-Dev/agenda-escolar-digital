@@ -1,5 +1,5 @@
 import type { Entry } from '@/types';
-import { MOCK_USERS, MOCK_STUDENTS } from '@/data/mocks';
+import type { Child, User } from '@/types';
 import { getEntryStudentIds } from '@/utils/visibility';
 
 /** Default al crear: comunicados y notas personales requieren confirmación. */
@@ -33,45 +33,55 @@ export function getPendingAckEntries(entries: Entry[], userId: string): Entry[] 
 }
 
 /** Padres que deberían confirmar según sección o alumnos destinatarios. */
-export function getExpectedParentIds(entry: Entry): string[] {
+export function getExpectedParentIds(
+  entry: Entry,
+  allParents: User[],
+  allStudents: Child[],
+): string[] {
   const targetStudentIds = getEntryStudentIds(entry);
 
   if (targetStudentIds.length > 0) {
     const parentIds = new Set<string>();
-    for (const user of MOCK_USERS) {
-      if (user.role !== 'padre') continue;
+    for (const user of allParents) {
       const hasTargetChild = user.children?.some(c => targetStudentIds.includes(c.id));
       if (hasTargetChild) parentIds.add(user.id);
     }
     return [...parentIds];
   }
 
-  const sectionStudentIds = MOCK_STUDENTS
+  const sectionStudentIds = allStudents
     .filter(s => s.section === entry.section)
     .map(s => s.id);
 
   const parentIds = new Set<string>();
-  for (const user of MOCK_USERS) {
-    if (user.role !== 'padre') continue;
+  for (const user of allParents) {
     const hasChildInSection = user.children?.some(c => sectionStudentIds.includes(c.id));
     if (hasChildInSection) parentIds.add(user.id);
   }
   return [...parentIds];
 }
 
-export function getAckStats(entry: Entry): { confirmed: number; total: number } {
+export function getAckStats(
+  entry: Entry,
+  allParents: User[],
+  allStudents: Child[],
+): { confirmed: number; total: number } {
   if (!entryRequiresAck(entry)) {
     return { confirmed: 0, total: 0 };
   }
-  const expected = getExpectedParentIds(entry);
+  const expected = getExpectedParentIds(entry, allParents, allStudents);
   const total = expected.length || 1;
   const confirmed = entry.readBy.filter(id => expected.includes(id)).length;
   return { confirmed, total };
 }
 
-export function hasIncompleteAck(entry: Entry): boolean {
+export function hasIncompleteAck(
+  entry: Entry,
+  allParents: User[],
+  allStudents: Child[],
+): boolean {
   if (!entryRequiresAck(entry)) return false;
-  const { confirmed, total } = getAckStats(entry);
+  const { confirmed, total } = getAckStats(entry, allParents, allStudents);
   return confirmed < total;
 }
 
@@ -82,11 +92,15 @@ export interface ParentAckStatus {
 }
 
 /** Lista de padres que deben confirmar lectura, con estado. */
-export function getParentAckList(entry: Entry): ParentAckStatus[] {
+export function getParentAckList(
+  entry: Entry,
+  allParents: User[],
+  allStudents: Child[],
+): ParentAckStatus[] {
   if (!entryRequiresAck(entry)) return [];
 
-  const expectedIds = getExpectedParentIds(entry);
-  const parents = MOCK_USERS.filter(u => u.role === 'padre' && expectedIds.includes(u.id));
+  const expectedIds = getExpectedParentIds(entry, allParents, allStudents);
+  const parents = allParents.filter(u => expectedIds.includes(u.id));
 
   return parents
     .map(p => ({

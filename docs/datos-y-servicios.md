@@ -6,14 +6,14 @@ Guía rápida: **dónde va cada cosa** según el modo de la app.
 
 ## Resumen
 
-Hay **un solo interruptor**. Según su valor, la app usa una capa u otra, pero **las pantallas siempre hablan igual** (vía contextos).
+Hay **un solo interruptor**. Según su valor, la app usa mock o API, pero **las pantallas hablan con hooks y store**, no con contextos.
 
 ```
 Pantallas (features/)
        ↓
-AuthContext / AppDataContext
+useAuth() (Zustand)  +  useEntries / useCalendarEvents / … (TanStack Query)
        ↓
-src/services/index.ts   ← elige mock o api
+src/services/*.service.ts   ← facades con firma única
        ↓
 ┌──────────────────┬──────────────────┐
 │  USE_MOCK=true   │ USE_MOCK=false   │
@@ -93,34 +93,47 @@ EntryDetailModal
         → mockStore.entries[i].readBy.push(userId)
 ```
 
-### 4. Factory (elige mock)
+### 4. Facades (firma única mock + API)
 
 ```
-src/services/index.ts
+src/services/
+├── auth.service.ts
+├── entries.service.ts
+├── calendar.service.ts
+├── notifications.service.ts
+├── chat.service.ts
+├── students.service.ts
+└── index.ts              # reexporta facades
 ```
 
-```ts
-export const entriesService = USE_MOCK ? entriesMock : entriesApi;
-export const authService      = USE_MOCK ? authMock      : authApi;
-// ... calendar, notifications, chat, students
-```
+**Importá siempre desde `@/services`**, no desde `mocks/` ni `api/` en pantallas.
 
-**Siempre importá desde aquí**, no desde `mocks/` ni `api/` directo en pantallas.
-
-### 5. Contextos (puente hacia la UI)
+### 5. Estado en la UI
 
 ```
-src/contexts/
-├── AuthContext.tsx       # login/logout → authService
-└── AppDataContext.tsx    # entries, calendario, notifs, chat → *Service
+src/store/
+├── authStore.ts          # Zustand + persist (usuario, hijo, sección)
+└── useAuth.ts            # hook useAuth()
+
+src/queries/
+├── queryClient.ts        # singleton TanStack Query
+├── keys.ts               # queryKeys
+├── useEntries.ts         # useQuery + mutations
+├── useCalendarEvents.ts
+├── useNotifications.ts
+├── useConversations.ts
+└── useStudents.ts
 ```
 
-Las pantallas usan:
+| Tipo de estado | Herramienta |
+|----------------|-------------|
+| Sesión, selección hijo/sección | **Zustand** (`useAuth`) |
+| Entries, calendario, notifs, chat | **TanStack Query** |
+| UI local (modal abierto, filtros) | `useState` en pantalla |
 
-- `useAuth()` → usuario, hijo/sección seleccionados
-- `useAppData()` → listas y acciones (addEntry, confirmEntryRead, …)
+Las mutations invalidan solo su dominio (`queryKeys.entries`, etc.), no recargan todo.
 
-**Las pantallas en `src/features/` no deberían importar `data/mocks/`** (salvo excepciones pendientes de migrar).
+**Las pantallas no importan `data/mocks/`** directamente.
 
 ---
 
@@ -166,7 +179,7 @@ export async function listEntries(params?: ListEntriesParams): Promise<Entry[]> 
 src/services/index.ts   → USE_MOCK=false usa *.api.ts
 ```
 
-Los contextos **no cambian**: siguen llamando `entriesService.listEntries()`.
+Los hooks de Query **no cambian**: siguen llamando `listEntries()` etc. desde las facades.
 
 ### 4. Lo que ya no se usa en producción
 
@@ -196,16 +209,10 @@ Los contextos **no cambian**: siguen llamando `entriesService.listEntries()`.
 | Capa | Archivos típicos | Acceso a datos |
 |------|------------------|----------------|
 | Rutas | `app/(tabs)/*.tsx`, `app/(modals)/*.tsx` | Solo importan pantallas de `features/` |
-| Pantallas | `src/features/**/*.tsx` | `useAuth()`, `useAppData()` |
-| Componentes | `src/components/features/*.tsx` | Props o contextos; a veces `getStudentName` de `@/services` |
-| Contextos | `src/contexts/*.tsx` | `*Service` desde `@/services/index.ts` |
-
-### Excepciones actuales (acopladas al mock)
-
-Estos archivos importan `data/mocks` directo — conviene migrarlos cuando pases a API:
-
-- `src/features/entries/NuevaAnotacionScreen.tsx` → `MOCK_STUDENTS`
-- `src/utils/ack.ts` → `MOCK_USERS`, `MOCK_STUDENTS` (lista de padres que confirmaron)
+| Pantallas | `src/features/**/*.tsx` | `useAuth()`, `useEntries()`, etc. |
+| Componentes | `src/components/features/*.tsx` | Props, query hooks, `getStudentName` |
+| Store | `src/store/authStore.ts` | Zustand persist + login/logout |
+| Queries | `src/queries/*.ts` | TanStack Query → facades |
 
 ---
 
@@ -213,10 +220,9 @@ Estos archivos importan `data/mocks` directo — conviene migrarlos cuando pases
 
 1. Implementar funciones en `src/services/api/*.api.ts` con `apiFetch`.
 2. Poner `EXPO_PUBLIC_API_URL` y `EXPO_PUBLIC_USE_MOCK=false` en `.env`.
-3. Probar login → `AuthContext` debe recibir `User` del backend.
-4. Verificar que `AppDataContext.refreshAll()` carga entries, calendar, notifications, chat.
-5. Reemplazar imports directos a `data/mocks` en pantallas/utils.
-6. Opcional: mantener mock para desarrollo offline con `USE_MOCK=true`.
+3. Probar login → `authStore` debe recibir `User` del backend.
+4. Verificar que `useEntries()`, `useCalendarEvents()`, etc. cargan datos.
+5. Opcional: mantener mock para desarrollo offline con `USE_MOCK=true`.
 
 ---
 
@@ -241,18 +247,18 @@ Mock y API devuelven **los mismos tipos**. El contrato vive en los `.api.ts` (pa
 ```mermaid
 flowchart TD
   UI[Pantallas features/]
-  AC[AuthContext]
-  AD[AppDataContext]
-  IDX[services/index.ts]
+  AuthStore[authStore Zustand]
+  QueryHooks[useEntries etc]
+  Facade[services/*.service.ts]
   MOCK[mocks/*.mock.ts]
   STORE[store.ts]
   DATA[data/mocks/*.mock.ts]
 
-  UI --> AC
-  UI --> AD
-  AC --> IDX
-  AD --> IDX
-  IDX -->|USE_MOCK=true| MOCK
+  UI --> AuthStore
+  UI --> QueryHooks
+  QueryHooks --> Facade
+  AuthStore --> Facade
+  Facade -->|USE_MOCK=true| MOCK
   MOCK --> STORE
   STORE -->|seed| DATA
 ```
@@ -262,18 +268,18 @@ flowchart TD
 ```mermaid
 flowchart TD
   UI[Pantallas features/]
-  AC[AuthContext]
-  AD[AppDataContext]
-  IDX[services/index.ts]
+  AuthStore[authStore Zustand]
+  QueryHooks[useEntries etc]
+  Facade[services/*.service.ts]
   API[api/*.api.ts]
   CLIENT[client.ts apiFetch]
   BE[Backend HTTP]
 
-  UI --> AC
-  UI --> AD
-  AC --> IDX
-  AD --> IDX
-  IDX -->|USE_MOCK=false| API
+  UI --> AuthStore
+  UI --> QueryHooks
+  QueryHooks --> Facade
+  AuthStore --> Facade
+  Facade -->|USE_MOCK=false| API
   API --> CLIENT
   CLIENT --> BE
 ```

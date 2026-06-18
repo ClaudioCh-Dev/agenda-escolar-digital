@@ -4,8 +4,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Plus, ClipboardList } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme, datePillStyle, cardShadow } from '@/theme';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAppData } from '@/contexts/AppDataContext';
+import { useAuth } from '@/store/useAuth';
+import { useEntries } from '@/queries/useEntries';
+import { useDeleteEntry } from '@/queries/useEntries';
+import { useUnreadNotificationsCount } from '@/queries/useNotifications';
+import { useParentsBySection } from '@/queries/useStudents';
+import { useStudentsBySection } from '@/queries/useStudents';
 import { TODAY } from '@/constants/config';
 import { isEntryVisible, shortSectionLabel } from '@/utils/visibility';
 import { hasIncompleteAck } from '@/utils/ack';
@@ -37,18 +41,23 @@ export function AuxiliarDashboard() {
   const { theme, styles } = useTheme();
   const router = useRouter();
   const { user, selectedSection, setSelectedSection } = useAuth();
-  const { entries, unreadNotifications, deleteEntry } = useAppData();
+  const { data: entries = [] } = useEntries();
+  const unreadNotifications = useUnreadNotificationsCount();
+  const deleteEntryMutation = useDeleteEntry();
+  const deleteEntry = (id: string) => deleteEntryMutation.mutateAsync(id);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
 
   const sections = user?.sections ?? [];
   const activeSection = selectedSection || sections[0] || '';
+  const { data: parents = [] } = useParentsBySection(activeSection);
+  const { data: students = [] } = useStudentsBySection(activeSection);
   const week = useMemo(() => buildWeek(TODAY), []);
   const context = { selectedSection: activeSection };
   const sectionEntries = entries.filter(e => user && isEntryVisible(e, user, context));
   const todayEntries = sectionEntries.filter(e => e.date === TODAY);
   const selectedEntry = selectedEntryId ? entries.find(e => e.id === selectedEntryId) ?? null : null;
   const comunicadosToday = todayEntries.filter(e => e.type === 'comunicado').length;
-  const pendingAck = todayEntries.filter(e => hasIncompleteAck(e)).length;
+  const pendingAck = todayEntries.filter(e => hasIncompleteAck(e, parents, students)).length;
   const important = todayEntries.filter(e => e.isImportant).length;
 
   const stats = [

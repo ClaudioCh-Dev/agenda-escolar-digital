@@ -18,6 +18,13 @@ export async function getSession(): Promise<User | null> {
   return mockStore.currentUser;
 }
 
+export async function rehydrateSession(user: User): Promise<User | null> {
+  const found = MOCK_USERS.find(u => u.id === user.id);
+  if (!found) return null;
+  mockStore.currentUser = found;
+  return found;
+}
+
 export async function changePassword(_data: ChangePasswordDto): Promise<void> {
   await new Promise(r => setTimeout(r, 800));
 }

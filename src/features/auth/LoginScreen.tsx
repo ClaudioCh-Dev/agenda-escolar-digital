@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, EyeOff, ArrowRight, GraduationCap, ClipboardList, Users, Mail, Lock } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useTheme } from '@/theme';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/store/useAuth';
 import { Button } from '@/components/ui/Button';
 
 const DEMO_ACCOUNTS: { label: string; email: string; icon: LucideIcon }[] = [

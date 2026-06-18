@@ -8,8 +8,9 @@ import type { LucideIcon } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme, filterPillStyle, datePillStyle } from '@/theme';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAppData } from '@/contexts/AppDataContext';
+import { useAuth } from '@/store/useAuth';
+import { useEntries, useConfirmEntryRead, useDeleteEntry } from '@/queries/useEntries';
+import { useUnreadNotificationsCount } from '@/queries/useNotifications';
 import { TODAY } from '@/constants/config';
 import { IllustrationSvg } from '@/components/ui/IllustrationSvg';
 import { entryTypeConfig } from '@/constants/entryTypes';
@@ -73,7 +74,12 @@ export function AgendaScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ date?: string }>();
   const { user, selectedSection, setSelectedSection, selectedChild, setSelectedChild } = useAuth();
-  const { entries, unreadNotifications, confirmEntryRead, deleteEntry } = useAppData();
+  const { data: entries = [] } = useEntries();
+  const unreadNotifications = useUnreadNotificationsCount();
+  const confirmEntryReadMutation = useConfirmEntryRead();
+  const confirmEntryRead = (entryId: string) => confirmEntryReadMutation.mutateAsync(entryId);
+  const deleteEntryMutation = useDeleteEntry();
+  const deleteEntry = (id: string) => deleteEntryMutation.mutateAsync(id);
 
   const initialDate = clampDate(typeof params.date === 'string' ? params.date : TODAY);
   const initialParsed = parseDate(initialDate);

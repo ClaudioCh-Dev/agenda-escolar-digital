@@ -7,12 +7,13 @@ import {
 import type { LucideIcon } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme, selectionStyle, cardShadow } from '@/theme';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAppData } from '@/contexts/AppDataContext';
+import { useAuth } from '@/store/useAuth';
+import { useEntries, useCreateEntry, useUpdateEntry } from '@/queries/useEntries';
+import { useCalendarEvents, useCreateCalendarEvent, useUpdateCalendarEvent } from '@/queries/useCalendarEvents';
+import { useStudentsBySection } from '@/queries/useStudents';
 import { TODAY } from '@/constants/config';
 import { entryTypeConfig, REGISTRO_TYPE_OPTIONS } from '@/constants/entryTypes';
 import { calendarEventTypeLabels, SCHOOL_CALENDAR_EVENT_TYPES, getCalendarTypeColors } from '@/constants/calendarTypes';
-import { MOCK_STUDENTS } from '@/data/mocks';
 import { getStudentName } from '@/services';
 import { shortSectionLabel } from '@/utils/visibility';
 import { defaultRequiresAckForType } from '@/utils/ack';
@@ -317,7 +318,21 @@ export function NuevaAnotacionScreen() {
     date?: string;
   }>();
   const { selectedSection } = useAuth();
-  const { entries, calendarEvents, addEntry, updateEntry, addCalendarEvent, updateCalendarEvent } = useAppData();
+  const { data: entries = [] } = useEntries();
+  const { data: calendarEvents = [] } = useCalendarEvents();
+  const createEntryMutation = useCreateEntry();
+  const updateEntryMutation = useUpdateEntry();
+  const createCalendarEventMutation = useCreateCalendarEvent();
+  const updateCalendarEventMutation = useUpdateCalendarEvent();
+  const addEntry = (data: Parameters<typeof createEntryMutation.mutateAsync>[0]['data'], options?: { sendNotification?: boolean }) =>
+    createEntryMutation.mutateAsync({ data, sendNotification: options?.sendNotification });
+  const updateEntry = (id: string, data: Parameters<typeof updateEntryMutation.mutateAsync>[0]['data'], options?: { sendNotification?: boolean }) =>
+    updateEntryMutation.mutateAsync({ id, data, sendNotification: options?.sendNotification });
+  const addCalendarEvent = (data: Parameters<typeof createCalendarEventMutation.mutateAsync>[0]) =>
+    createCalendarEventMutation.mutateAsync(data);
+  const updateCalendarEvent = (id: string, data: Parameters<typeof updateCalendarEventMutation.mutateAsync>[0]['data']) =>
+    updateCalendarEventMutation.mutateAsync({ id, data });
+  const { data: sectionStudents = [] } = useStudentsBySection(selectedSection);
 
   const editingEntry = useMemo(
     () => entries.find(e => e.id === params.editEntryId),
@@ -372,7 +387,6 @@ export function NuevaAnotacionScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const sectionStudents = MOCK_STUDENTS.filter(s => s.section === selectedSection);
   const isPersonalizado = selectedType === 'personalizado';
   const isRegistro = mode === 'registro';
 

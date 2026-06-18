@@ -6,10 +6,11 @@ Reglas para mantener coherencia visual y de código en este proyecto. Basadas en
 
 ## General
 
-- **Stack:** Expo SDK 56, React Native, Expo Router, TypeScript.
+- **Stack:** Expo SDK 56, React Native, Expo Router, TypeScript, **Zustand**, **TanStack Query**.
 - **Rutas delgadas:** `app/` solo enruta; la lógica vive en `src/features/`.
-- **Datos:** las pantallas usan `useAuth()` y `useAppData()`. No importar mocks directamente desde pantallas.
-- **Mock vs API:** `USE_MOCK` en `src/constants/config.ts`. Stubs en `src/services/api/`, implementación mock en `src/services/mocks/`.
+- **Estado de sesión:** `useAuth()` desde `@/store/useAuth` (Zustand + persist).
+- **Estado del servidor:** hooks en `@/queries/` (TanStack Query). No usar Context para datos de API.
+- **Servicios:** importar desde `@/services` (facades). No importar mocks directamente desde pantallas.
 - **Idioma UI:** español rioplatense cuando encaje (*Revisá*, *Confirmá*, *Completá*).
 - **Layouts:** flexbox por defecto; evitar posicionamiento absoluto salvo decoración (`pointerEvents="none"`) o overlays.
 - **Truncado:** en filas flex, usar `flex: 1, minWidth: 0` + `numberOfLines` donde haga falta.

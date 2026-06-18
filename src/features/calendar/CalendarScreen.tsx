@@ -7,8 +7,9 @@ import {
 import type { LucideIcon } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme, cardShadow } from '@/theme';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAppData } from '@/contexts/AppDataContext';
+import { useAuth } from '@/store/useAuth';
+import { useCalendarEvents, useDeleteCalendarEvent } from '@/queries/useCalendarEvents';
+import { useUnreadNotificationsCount } from '@/queries/useNotifications';
 import { TODAY } from '@/constants/config';
 import { calendarEventTypeLabels, getCalendarTypeColors, SCHOOL_CALENDAR_EVENT_TYPES } from '@/constants/calendarTypes';
 import { shortSectionLabel } from '@/utils/visibility';
@@ -36,7 +37,10 @@ export function CalendarScreen() {
   const { theme, isDark } = useTheme();
   const router = useRouter();
   const { user, selectedSection, setSelectedSection, selectedChild, setSelectedChild } = useAuth();
-  const { calendarEvents, unreadNotifications, deleteCalendarEvent } = useAppData();
+  const { data: calendarEvents = [] } = useCalendarEvents();
+  const unreadNotifications = useUnreadNotificationsCount();
+  const deleteCalendarEventMutation = useDeleteCalendarEvent();
+  const deleteCalendarEvent = (id: string) => deleteCalendarEventMutation.mutateAsync(id);
 
   const todayParts = TODAY.split('-').map(Number);
   const [year, setYear] = useState(todayParts[0]);

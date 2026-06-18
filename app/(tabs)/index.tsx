@@ -1,4 +1,4 @@
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/store/useAuth';
 import { AuxiliarDashboard } from '@/features/dashboard/AuxiliarDashboard';
 import { ParentDashboard } from '@/features/dashboard/ParentDashboard';
 

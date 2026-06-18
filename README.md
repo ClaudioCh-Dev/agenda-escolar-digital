@@ -2,7 +2,7 @@
 
 App mobile (Expo / React Native) para gestión escolar: anotaciones, calendario, notificaciones y perfil. Incluye datos mock y arquitectura lista para conectar una API real.
 
-**Stack:** Expo SDK 56 · React Native 0.85 · Expo Router · TypeScript · Nunito · Lucide icons
+**Stack:** Expo SDK 56 · React Native 0.85 · Expo Router · TypeScript · **Zustand** · **TanStack Query** · Nunito · Lucide icons
 
 ---
 
@@ -140,9 +140,11 @@ src/
   constants/            # Config, labels, tipos de anotación
   data/mocks/           # Datos estáticos
   services/
-    api/                # Stubs (firmas de endpoints reales)
-    mocks/              # Store en memoria
-  contexts/             # AuthContext, AppDataContext
+    api/                # Stubs HTTP (implementar para prod)
+    mocks/              # Store en memoria (dev)
+    *.service.ts        # Facades con firma única mock/API
+  store/                # Zustand (auth + persist)
+  queries/              # TanStack Query hooks
   components/
     ui/                 # Button, Modal, TodayDateText, etc.
     features/           # EntryCard, PendingAckGuideModal, etc.
@@ -153,7 +155,7 @@ assets/                 # Iconos, splash, avatares mock
 docs/screenshots/       # Capturas para este README
 ```
 
-Las pantallas **no importan mocks directamente**; usan `useAuth()` y `useAppData()`.
+Las pantallas usan `useAuth()` (Zustand) y hooks de `@/queries/` (TanStack Query). Ver [docs/datos-y-servicios.md](docs/datos-y-servicios.md).
 
 ---
 

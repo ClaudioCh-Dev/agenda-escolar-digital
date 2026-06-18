@@ -6,8 +6,8 @@ import {
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme, cardShadow } from '@/theme';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAppData } from '@/contexts/AppDataContext';
+import { useAuth } from '@/store/useAuth';
+import { useUnreadNotificationsCount } from '@/queries/useNotifications';
 import { Toggle } from '@/components/ui/Toggle';
 import { TopBar } from '@/components/layout/TopBar';
 import { SoftStairBarsBackground } from '@/components/ui/SoftStairBarsBackground';
@@ -228,7 +228,7 @@ export function ProfileScreen() {
   const { theme, isDark, setDarkMode } = useTheme();
   const router = useRouter();
   const { user, logout } = useAuth();
-  const { unreadNotifications } = useAppData();
+  const unreadNotifications = useUnreadNotificationsCount();
   const [notifications, setNotifications] = useState({ push: true, email: false, reminders: true });
 
   if (!user) return null;

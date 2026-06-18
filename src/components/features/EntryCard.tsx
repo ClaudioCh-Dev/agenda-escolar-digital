@@ -16,6 +16,7 @@ import { getEntryStudentIds, shortSectionLabel } from '@/utils/visibility';
 
 import { entryRequiresAck, getAckStats, isPendingAck } from '@/utils/ack';
 import { EntryAuthorLabel } from '@/components/features/EntryAuthorLabel';
+import { useParentsBySection, useStudentsBySection } from '@/queries/useStudents';
 
 import { useTheme, cardShadow } from '@/theme';
 
@@ -62,14 +63,14 @@ export function EntryCard({
   const { theme } = useTheme();
 
   const config = entryTypeConfig[entry.type];
+  const ackSection = canManage && entry.section ? entry.section : '';
+  const { data: ackParents = [] } = useParentsBySection(ackSection);
+  const { data: ackStudents = [] } = useStudentsBySection(ackSection);
 
   const requiresAck = entryRequiresAck(entry);
-
   const isRead = entry.readBy.includes(userId);
-
   const pendingAck = isReadOnly && isPendingAck(entry, userId);
-
-  const ackStats = canManage ? getAckStats(entry) : null;
+  const ackStats = canManage ? getAckStats(entry, ackParents, ackStudents) : null;
 
   const targetStudentIds = getEntryStudentIds(entry);
 

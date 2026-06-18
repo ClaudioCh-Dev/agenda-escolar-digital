@@ -35,8 +35,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Button } from '@/components/ui/Button';
 
 import { ParentAckListModal } from '@/components/features/ParentAckListModal';
-
-
+import { useParentsBySection, useStudentsBySection } from '@/queries/useStudents';
 
 const ICONS: Record<EntryType, LucideIcon> = {
 
@@ -113,7 +112,9 @@ export function EntryDetailModal({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAckList, setShowAckList] = useState(false);
 
-
+  const section = entry?.section ?? '';
+  const { data: ackParents = [] } = useParentsBySection(section);
+  const { data: ackStudents = [] } = useStudentsBySection(section);
 
   if (!entry) return null;
 
@@ -129,8 +130,8 @@ export function EntryDetailModal({
 
   const pendingAck = isReadOnly && isPendingAck(entry, userId);
 
-  const ackStats = getAckStats(entry);
-  const parentAckList = getParentAckList(entry);
+  const ackStats = getAckStats(entry, ackParents, ackStudents);
+  const parentAckList = getParentAckList(entry, ackParents, ackStudents);
 
   const targetStudentIds = getEntryStudentIds(entry);
 

@@ -5,7 +5,7 @@ import {
 import type { LucideIcon } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme, cardShadow } from '@/theme';
-import { useAppData } from '@/contexts/AppDataContext';
+import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from '@/queries/useNotifications';
 import { TODAY } from '@/constants/config';
 import type { EntryType, AppNotification } from '@/types';
 
@@ -219,7 +219,11 @@ function OlderNotificationItem({ notification }: { notification: AppNotification
 export function NotificationsScreen() {
   const { theme } = useTheme();
   const router = useRouter();
-  const { notifications, markNotifRead, markAllNotifRead } = useAppData();
+  const { data: notifications = [] } = useNotifications();
+  const markNotifReadMutation = useMarkNotificationRead();
+  const markAllNotifReadMutation = useMarkAllNotificationsRead();
+  const markNotifRead = (id: string) => markNotifReadMutation.mutateAsync(id);
+  const markAllNotifRead = () => markAllNotifReadMutation.mutateAsync();
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
   const todayNotifs = notifications.filter(n => n.timestamp.startsWith(TODAY));

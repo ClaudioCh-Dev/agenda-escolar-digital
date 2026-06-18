@@ -1,7 +1,8 @@
 import type { CalendarEvent, CreateCalendarEventDto, UpdateCalendarEventDto } from '@/types';
 import { mockStore, createCalendarEventInStore, updateCalendarEventInStore, deleteCalendarEventInStore } from './store';
+import type { ListEventsParams } from '../api/calendar.api';
 
-export async function listEvents(): Promise<CalendarEvent[]> {
+export async function listEvents(_params?: ListEventsParams): Promise<CalendarEvent[]> {
   return [...mockStore.calendarEvents];
 }
 

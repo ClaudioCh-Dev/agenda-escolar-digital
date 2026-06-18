@@ -3,8 +3,10 @@ import { View, Text, Pressable, Image, type ImageSourcePropType } from 'react-na
 import { Bell, ChevronRight, CheckCircle2, CalendarDays } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme, datePillStyle, cardShadow } from '@/theme';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAppData } from '@/contexts/AppDataContext';
+import { useAuth } from '@/store/useAuth';
+import { useEntries } from '@/queries/useEntries';
+import { useConfirmEntryRead } from '@/queries/useEntries';
+import { useUnreadNotificationsCount } from '@/queries/useNotifications';
 import { TODAY } from '@/constants/config';
 import { isEntryVisible } from '@/utils/visibility';
 import { countPendingAck } from '@/utils/ack';
@@ -44,7 +46,10 @@ export function ParentDashboard() {
   const { theme, styles } = useTheme();
   const router = useRouter();
   const { user, selectedChild, setSelectedChild } = useAuth();
-  const { entries, unreadNotifications, confirmEntryRead } = useAppData();
+  const { data: entries = [] } = useEntries();
+  const unreadNotifications = useUnreadNotificationsCount();
+  const confirmEntryReadMutation = useConfirmEntryRead();
+  const confirmEntryRead = (entryId: string) => confirmEntryReadMutation.mutateAsync(entryId);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const [showAckGuide, setShowAckGuide] = useState(false);
 
