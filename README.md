@@ -68,47 +68,63 @@ Para probar listas largas de padres: comunicado `e-002` (30 familias en 3° A, 1
 
 ### Login
 
-![Login screen](docs/screenshots/login.jpeg)
+<p align="center">
+  <img src="docs/screenshots/login.jpeg" alt="Login" width="250">
+</p>
 
 Pantalla de ingreso con cuentas demo.
 
 ### Inicio (padre)
 
-![Parent home](docs/screenshots/home-parent.jpeg)
+<p align="center">
+  <img src="docs/screenshots/home-parent.jpeg" alt="Home-Parend" width="250">
+</p>
 
 Dashboard del padre: selector de hijo, fecha del día y banner de lecturas pendientes.
 
 ### Inicio (auxiliar)
 
-![Assistant home](docs/screenshots/home-assistant.jpeg)
+<p align="center">
+  <img src="docs/screenshots/home-assistant.jpeg" alt="Home-Assistant" width="250">
+</p>
 
 Resumen del día, stats y accesos rápidos para el auxiliar/docente.
 
 ### Agenda
 
-![Schedule](docs/screenshots/agenda.jpeg)
+<p align="center">
+  <img src="docs/screenshots/agenda.jpeg" alt="Agenda" width="250">
+</p>
 
 Lista de anotaciones del día con filtros y tipos de entrada.
 
 ### Calendario
 
-![Calendar](docs/screenshots/calendar.jpeg)
+<p align="center">
+  <img src="docs/screenshots/calendar.jpeg" alt="Calendar" width="250">
+</p>
 
 Vista mensual con eventos del día seleccionado.
 
 ### Perfil
 
-![Profile](docs/screenshots/profile.jpeg)
+<p align="center">
+  <img src="docs/screenshots/profile.jpeg" alt="Profile" width="250">
+</p>
 
 Datos del usuario, rol, stats y ajustes (modo oscuro, cerrar sesión).
 
 ### Confirmar lectura (padre)
 
-![Read confirmation list](docs/screenshots/read-confirmation-list.jpeg)
+<p align="center">
+  <img src="docs/screenshots/read-confirmation-list.jpeg" alt="Read-Confirmation-Lis" width="250">
+</p>
 
 Modal con lista numerada de comunicados pendientes de confirmar.
 
-![Read confirmation detail](docs/screenshots/read-confirmation-detail.jpeg)
+<p align="center">
+  <img src="docs/screenshots/read-confirmation-detail.jpeg" alt="Read-Confirmation-Detail" width="250">
+</p>
 
 Detalle del comunicado con botón *Confirmo que he leído*.
 
@@ -182,18 +198,3 @@ Para API real:
 | `pnpm lint` | Chequeo TypeScript (`tsc --noEmit`) |
 
 ---
-
-## Archivos de capturas
-
-| Archivo | Pantalla |
-|---------|----------|
-| `login.jpeg` | Login |
-| `home-parent.jpeg` | Inicio padre |
-| `home-assistant.jpeg` | Inicio auxiliar |
-| `agenda.jpeg` | Agenda |
-| `calendar.jpeg` | Calendario |
-| `profile.jpeg` | Perfil |
-| `read-confirmation-list.jpeg` | Modal lista pendientes |
-| `read-confirmation-detail.jpeg` | Modal detalle + botón confirmar |
-
-Todas en `docs/screenshots/`.
