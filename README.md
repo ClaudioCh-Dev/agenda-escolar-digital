@@ -66,93 +66,51 @@ Para probar listas largas de padres: comunicado `e-002` (30 familias en 3° A, 1
 
 ## Capturas esenciales
 
-Guardá las fotos en `docs/screenshots/` con el nombre indicado. Cuando las tengas, reemplazá el texto *Pon foto acá…* por la imagen en markdown.
+### Login
 
-### 1. Login
+![Login screen](docs/screenshots/login.jpeg)
 
-```
-docs/screenshots/01-login.png
-```
+Pantalla de ingreso con cuentas demo.
 
-> **Pon foto acá del login** — email, contraseña y botón de ingreso.
+### Inicio (padre)
 
-<!-- ![Login](docs/screenshots/01-login.png) -->
+![Parent home](docs/screenshots/home-parent.jpeg)
 
----
+Dashboard del padre: selector de hijo, fecha del día y banner de lecturas pendientes.
 
-### 2. Inicio (padre)
+### Inicio (auxiliar)
 
-```
-docs/screenshots/02-inicio-padre.png
-```
+![Assistant home](docs/screenshots/home-assistant.jpeg)
 
-> **Pon foto acá del inicio padre** — selector de hijo, fecha *Hoy* y banner amarillo de lecturas pendientes (si aparece).
+Resumen del día, stats y accesos rápidos para el auxiliar/docente.
 
-<!-- ![Inicio padre](docs/screenshots/02-inicio-padre.png) -->
+### Agenda
 
----
+![Schedule](docs/screenshots/agenda.jpeg)
 
-### 3. Inicio (auxiliar)
+Lista de anotaciones del día con filtros y tipos de entrada.
 
-```
-docs/screenshots/03-inicio-auxiliar.png
-```
+### Calendario
 
-> **Pon foto acá del inicio auxiliar** — tarjeta del día, stats y accesos rápidos.
+![Calendar](docs/screenshots/calendar.jpeg)
 
-<!-- ![Inicio auxiliar](docs/screenshots/03-inicio-auxiliar.png) -->
+Vista mensual con eventos del día seleccionado.
 
----
+### Perfil
 
-### 4. Agenda
+![Profile](docs/screenshots/profile.jpeg)
 
-```
-docs/screenshots/04-agenda.png
-```
+Datos del usuario, rol, stats y ajustes (modo oscuro, cerrar sesión).
 
-> **Pon foto acá de la agenda** — lista de anotaciones del día (ideal con auxiliar logueado y FAB visible).
+### Confirmar lectura (padre)
 
-<!-- ![Agenda](docs/screenshots/04-agenda.png) -->
+![Read confirmation list](docs/screenshots/read-confirmation-list.jpeg)
 
----
+Modal con lista numerada de comunicados pendientes de confirmar.
 
-### 5. Calendario
+![Read confirmation detail](docs/screenshots/read-confirmation-detail.jpeg)
 
-```
-docs/screenshots/05-calendario.png
-```
-
-> **Pon foto acá del calendario** — mes con día seleccionado y lista de eventos abajo.
-
-<!-- ![Calendario](docs/screenshots/05-calendario.png) -->
-
----
-
-### 6. Perfil
-
-```
-docs/screenshots/06-perfil.png
-```
-
-> **Pon foto acá del perfil** — avatar, nombre, rol, stats y toggle de modo oscuro.
-
-<!-- ![Perfil](docs/screenshots/06-perfil.png) -->
-
----
-
-### 7. Confirmar lectura (padre)
-
-```
-docs/screenshots/07-confirmar-lectura.png
-docs/screenshots/08-confirmar-lectura-detalle.png
-```
-
-> **Pon foto acá del modal Confirmar lectura** — lista numerada de pendientes.
-
-> **Pon foto acá del detalle con el botón** — comunicado abierto y botón *Confirmo que he leído* abajo.
-
-<!-- ![Confirmar lectura](docs/screenshots/07-confirmar-lectura.png) -->
-<!-- ![Detalle confirmar](docs/screenshots/08-confirmar-lectura-detalle.png) -->
+Detalle del comunicado con botón *Confirmo que he leído*.
 
 ---
 
@@ -225,9 +183,17 @@ Para API real:
 
 ---
 
-## Tips para sacar capturas
+## Archivos de capturas
 
-1. Usá **padre@colegio.edu** para banner y modales de confirmación.
-2. Usá **auxiliar@colegio.edu** para agenda con botón de crear y calendario editable.
-3. Modo claro y oscuro: cambialo en **Perfil** antes de fotografiar.
-4. En emulador: `Ctrl + S` (Windows) o `Cmd + S` (Mac) suele guardar screenshot; en dispositivo, captura nativa del sistema.
+| Archivo | Pantalla |
+|---------|----------|
+| `login.jpeg` | Login |
+| `home-parent.jpeg` | Inicio padre |
+| `home-assistant.jpeg` | Inicio auxiliar |
+| `agenda.jpeg` | Agenda |
+| `calendar.jpeg` | Calendario |
+| `profile.jpeg` | Perfil |
+| `read-confirmation-list.jpeg` | Modal lista pendientes |
+| `read-confirmation-detail.jpeg` | Modal detalle + botón confirmar |
+
+Todas en `docs/screenshots/`.
