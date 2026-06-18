@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Agenda Escolar Digital",
+    "slug": "agenda-escolar-digital",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "agendaescolar",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0D9488"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.colegio.agendaescolar"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundColor": "#0D9488"
+      },
+      "package": "com.colegio.agendaescolar"
+    },
+    "plugins": ["expo-router", "expo-font"],
+    "platforms": ["ios", "android"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
