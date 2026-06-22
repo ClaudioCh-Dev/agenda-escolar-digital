@@ -1,0 +1,52 @@
+---
+description: Nest API — sugerir permisos al crear endpoints y mantener registro en endpoints-permissions.md
+globs: api/src/**/*.ts
+alwaysApply: false
+---
+
+# Nest API — permisos RBAC por endpoint
+
+Proyecto `api/`. IAM en PostgreSQL: `permissions`, `roles`, `user_roles`, `v_user_permissions` (`api/database/migrations/`).
+
+## Antes de crear o modificar un endpoint
+
+**No implementes el controller hasta proponer permisos** (salvo que el usuario diga explícitamente que omita este paso).
+
+1. Indica **método + ruta** y el **permiso sugerido** del catálogo (ej. `entries.create`).
+2. Si no encaja ninguno, propón un código nuevo (`modulo.accion`) y avisa que hay que añadirlo en una migración Flyway (`V*__seed_…` o nueva versión).
+3. Pregunta al usuario:
+   - **Aplicar ahora** — guard `@RequirePermission('…')` (cuando exista) + actualizar registro.
+   - **Por el momento no** — implementar sin guard; marcar permiso como *pendiente* en el registro.
+4. **Siempre** actualiza [`api/docs/endpoints-permissions.md`](api/docs/endpoints-permissions.md): mueve el endpoint a la sección correcta (con permiso / sin permiso / pendiente).
+
+## Criterios de asignación
+
+| Tipo de endpoint | Permiso |
+|------------------|---------|
+| CRUD de entries | `entries.read` / `.create` / `.update` / `.delete` |
+| Confirmar lectura padre | `entries.ack` |
+| CRUD calendario | `calendar.*` |
+| Notificaciones | `notifications.read` (+ marcar leído: mismo permiso) |
+| Chat | `chat.read` (listar) / `chat.send` (enviar) |
+| Alumnos / padres por sección | `students.read` |
+| Secciones | `sections.read` / `sections.manage` |
+| Usuarios del colegio | `users.read` / `users.manage` |
+| Horarios (fase 2) | `schedules.read` / `schedules.manage` |
+| Login, logout, sesión, cambiar contraseña | **Sin permiso RBAC** — solo autenticación o público |
+| Health / `GET /` | **Sin permiso** — público |
+
+## Al elegir "por el momento no"
+
+- No añadas guard ni decorador de permiso.
+- En `endpoints-permissions.md`: columna **Guard** = `pendiente`, **Permiso sugerido** = el código propuesto.
+- Menciona en la respuesta qué permiso quedó pendiente para activarlo después.
+
+## Checklist endpoint nuevo
+
+- [ ] Permiso sugerido (o explícito "sin permiso" con motivo)
+- [ ] Decisión del usuario: aplicar ahora / por el momento no
+- [ ] `endpoints-permissions.md` actualizado
+- [ ] Si permiso nuevo: migración Flyway con INSERT en `permissions` / `role_permissions`
+- [ ] Controller retorna `ApiSuccess` (ver regla `nest-api-response`)
+
+Referencia de control: `api/docs/endpoints-permissions.md`.

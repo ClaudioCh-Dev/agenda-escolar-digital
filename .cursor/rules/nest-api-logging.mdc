@@ -1,0 +1,73 @@
+---
+description: Nest API — logging estructurado (HTTP, errores, dominio)
+globs: api/src/**/*.ts
+alwaysApply: false
+---
+
+# Nest API — Logging
+
+Proyecto `api/`. Logging en tres capas. Referencia humana: [`api/docs/logging.md`](api/docs/logging.md).
+
+## Capas
+
+| Capa | Dónde | Qué hacer |
+|------|-------|-----------|
+| HTTP | `nestjs-pino` / `LoggingModule` | Automático; **no** loguear requests en controllers |
+| Errores | `GlobalExceptionFilter` | Automático (`warn` negocio/validación, `error` 500) |
+| Dominio | Services | `Logger` + objeto con `action` |
+
+## Controllers
+
+- **No** añadir logs de request/response.
+- Retornar `ApiSuccess` (ver regla `nest-api-response`).
+
+## Services
+
+```typescript
+import { Injectable, Logger } from '@nestjs/common';
+import { domainLog } from '../shared/logging';
+
+@Injectable()
+export class MiService {
+  private readonly logger = new Logger(MiService.name);
+
+  async create(...) {
+    this.logger.log(domainLog({ action: 'entries.create', userId, module: 'entries' }));
+  }
+}
+```
+
+## Convención `action`
+
+Formato: `modulo.entidad.verbo` — ej. `auth.login.success`, `entries.delete`.
+
+| Nivel | Cuándo |
+|-------|--------|
+| `log` | Operación exitosa, info relevante |
+| `warn` | Fallo esperado, seguridad (login fail, token reuse) |
+| `error` | Solo si no relanzas; preferir filtro global para 500 |
+
+## Eventos obligatorios
+
+- **Auth:** login success/fail/inactive, refresh success/reuse, logout, password change.
+- **Mutaciones:** create / update / delete de entries, calendar_events, users.
+- **Seguridad:** log **antes** del `throw` en login fail (el filtro no duplica el contexto de negocio).
+
+## Prohibido en logs
+
+`password`, `passwordHash`, `currentPassword`, `newPassword`, `accessToken`, `refreshToken`, `JWT_SECRET`, header `Authorization` completo.
+
+## Errores
+
+- Reglas de negocio → `throw new XxxException` (filtro loguea `warn`).
+- Validación DTO → `ValidationPipe` (filtro loguea `warn`).
+- **No** duplicar log en service si solo haces `throw`, salvo eventos de seguridad arriba.
+
+## Checklist al crear endpoint
+
+- [ ] Controller sin logs HTTP manuales
+- [ ] Service con `Logger` y `action` en operaciones sensibles o mutaciones
+- [ ] `BaseException` + `ErrorCode` si aplica (ver `nest-api-response`)
+- [ ] Sin datos sensibles en logs
+- [ ] Permisos: ver `nest-api-permissions`
+- [ ] Actualizar [`api/docs/logging.md`](api/docs/logging.md) si hay nuevos `action`

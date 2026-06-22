@@ -1,0 +1,160 @@
+-- Agenda Escolar Digital — Fase 2 (NO ejecutar en producción actual)
+-- Referencia de tablas, migraciones y vistas pendientes.
+-- Descomentar y ejecutar en orden cuando la app use horarios y cursos.
+--
+-- Requiere: esquema activo (01 → 02 → 03) ya aplicado.
+
+-- ===========================================================================
+-- Cursos / materias
+-- ===========================================================================
+
+-- CREATE TABLE courses (
+--   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   school_id   UUID NOT NULL REFERENCES schools (id) ON DELETE CASCADE,
+--   section_id  UUID REFERENCES sections (id) ON DELETE SET NULL,
+--   name        TEXT NOT NULL,
+--   code        TEXT,
+--   school_year TEXT NOT NULL,
+--   teacher_id  UUID REFERENCES users (id) ON DELETE SET NULL,
+--   is_active   BOOLEAN NOT NULL DEFAULT true,
+--   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+--   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+--   UNIQUE (school_id, name, school_year)
+-- );
+--
+-- CREATE INDEX idx_courses_section ON courses (section_id) WHERE section_id IS NOT NULL;
+-- CREATE INDEX idx_courses_teacher ON courses (teacher_id) WHERE teacher_id IS NOT NULL;
+--
+-- CREATE TABLE course_students (
+--   course_id   UUID NOT NULL REFERENCES courses (id) ON DELETE CASCADE,
+--   student_id  UUID NOT NULL REFERENCES students (id) ON DELETE CASCADE,
+--   PRIMARY KEY (course_id, student_id)
+-- );
+--
+-- CREATE INDEX idx_course_students_student ON course_students (student_id);
+
+-- entries: tarea/comunicado por materia
+-- ALTER TABLE entries ADD COLUMN course_id UUID REFERENCES courses (id) ON DELETE SET NULL;
+-- CREATE INDEX idx_entries_course_date ON entries (course_id, entry_date DESC) WHERE course_id IS NOT NULL;
+
+-- ===========================================================================
+-- Horarios de clase (modelo por sección)
+-- ===========================================================================
+
+-- CREATE TABLE schedules (
+--   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   school_id       UUID NOT NULL REFERENCES schools (id) ON DELETE CASCADE,
+--   section_id      UUID NOT NULL REFERENCES sections (id) ON DELETE CASCADE,
+--   name            TEXT NOT NULL,
+--   effective_from  DATE,
+--   effective_until DATE,
+--   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+--   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+-- );
+--
+-- CREATE INDEX idx_schedules_section ON schedules (section_id);
+--
+-- CREATE TABLE classrooms (
+--   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   school_id   UUID NOT NULL REFERENCES schools (id) ON DELETE CASCADE,
+--   name        TEXT NOT NULL,          -- ej. "Aula 12"
+--   code        TEXT,                   -- ej. "A-12" (opcional)
+--   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+--   UNIQUE (school_id, name)
+-- );
+--
+-- CREATE INDEX idx_classrooms_school ON classrooms (school_id);
+--
+-- CREATE TABLE schedule_blocks (
+--   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   schedule_id   UUID NOT NULL REFERENCES schedules (id) ON DELETE CASCADE,
+--   day           day_of_week NOT NULL,
+--   starts_at     TIME NOT NULL,
+--   ends_at       TIME NOT NULL,
+--   subject       TEXT NOT NULL,
+--   teacher_id    UUID REFERENCES users (id) ON DELETE SET NULL,
+--   classroom_id  UUID REFERENCES classrooms (id) ON DELETE SET NULL,
+--   CHECK (ends_at > starts_at)
+-- );
+--
+-- CREATE INDEX idx_schedule_blocks_schedule ON schedule_blocks (schedule_id);
+-- CREATE INDEX idx_schedule_blocks_day ON schedule_blocks (schedule_id, day, starts_at);
+-- CREATE INDEX idx_schedule_blocks_teacher ON schedule_blocks (teacher_id) WHERE teacher_id IS NOT NULL;
+-- CREATE INDEX idx_schedule_blocks_classroom ON schedule_blocks (classroom_id) WHERE classroom_id IS NOT NULL;
+
+-- Horario semanal por sección
+-- CREATE VIEW v_section_schedule AS
+-- SELECT
+--   sch.id AS schedule_id,
+--   sch.section_id,
+--   sec.name AS section_name,
+--   sb.day,
+--   sb.starts_at,
+--   sb.ends_at,
+--   sb.subject,
+--   sb.teacher_id,
+--   tu.name AS teacher_name,
+--   sb.classroom_id,
+--   cr.name AS classroom_name,
+--   cr.code AS classroom_code
+-- FROM schedules sch
+-- JOIN sections sec ON sec.id = sch.section_id
+-- JOIN schedule_blocks sb ON sb.schedule_id = sch.id
+-- LEFT JOIN users tu ON tu.id = sb.teacher_id
+-- LEFT JOIN classrooms cr ON cr.id = sb.classroom_id
+-- ORDER BY sch.section_id, sb.day, sb.starts_at;
+
+-- ===========================================================================
+-- Migración: schedules ligados a courses (reemplaza section_id)
+-- ===========================================================================
+
+-- DROP INDEX idx_schedules_section;
+-- ALTER TABLE schedules DROP COLUMN section_id;
+-- ALTER TABLE schedules ADD COLUMN course_id UUID NOT NULL UNIQUE REFERENCES courses (id) ON DELETE CASCADE;
+-- CREATE INDEX idx_schedules_course ON schedules (course_id);
+--
+-- ALTER TABLE schedule_blocks DROP COLUMN subject;
+-- ALTER TABLE schedule_blocks DROP COLUMN teacher_id;
+-- DROP INDEX idx_schedule_blocks_teacher;
+
+-- CREATE VIEW v_course_schedule AS
+-- SELECT
+--   c.id AS course_id,
+--   c.name AS course_name,
+--   c.section_id,
+--   sec.name AS section_name,
+--   tu.name AS teacher_name,
+--   sch.id AS schedule_id,
+--   sb.day,
+--   sb.starts_at,
+--   sb.ends_at,
+--   cr.name AS classroom_name,
+--   cr.code AS classroom_code
+-- FROM courses c
+-- JOIN schedules sch ON sch.course_id = c.id
+-- JOIN schedule_blocks sb ON sb.schedule_id = sch.id
+-- LEFT JOIN sections sec ON sec.id = c.section_id
+-- LEFT JOIN users tu ON tu.id = c.teacher_id
+-- LEFT JOIN classrooms cr ON cr.id = sb.classroom_id
+-- ORDER BY c.section_id, c.name, sb.day, sb.starts_at;
+
+-- CREATE VIEW v_student_schedule AS
+-- SELECT
+--   cs.student_id,
+--   su.name AS student_name,
+--   c.id AS course_id,
+--   c.name AS course_name,
+--   sb.day,
+--   sb.starts_at,
+--   sb.ends_at,
+--   tu.name AS teacher_name,
+--   cr.name AS classroom_name
+-- FROM course_students cs
+-- JOIN courses c ON c.id = cs.course_id
+-- JOIN schedules sch ON sch.course_id = c.id
+-- JOIN schedule_blocks sb ON sb.schedule_id = sch.id
+-- JOIN students st ON st.id = cs.student_id
+-- JOIN users su ON su.id = st.user_id
+-- LEFT JOIN users tu ON tu.id = c.teacher_id
+-- LEFT JOIN classrooms cr ON cr.id = sb.classroom_id
+-- ORDER BY cs.student_id, sb.day, sb.starts_at;

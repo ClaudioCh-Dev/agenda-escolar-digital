@@ -1,0 +1,77 @@
+---
+description: Nest API — respuestas ApiSuccess y errores BaseException (envelope success/data/error)
+globs: api/src/**/*.ts
+alwaysApply: false
+---
+
+# Nest API — ApiResponse / ApiError
+
+Proyecto `api/`. Toda respuesta HTTP debe usar el envelope definido en `api/src/shared/`.
+
+## Envelope obligatorio
+
+```json
+{ "success": true, "data": { ... }, "error": null }
+{ "success": false, "data": null, "error": { "code": "...", "message": "...", "detail": "..." } }
+```
+
+## Controllers
+
+- Importar desde `../shared` o `@/shared` según la ruta del módulo.
+- Retorno exitoso: `return new ApiSuccess(dto)` — **nunca** devolver DTO crudo, string ni `{ data: x }` suelto.
+- Tipo de retorno explícito: `ApiSuccess<MiDto>`.
+- **No** armar JSON de error en el controller; **no** usar `throw new HttpException(...)` para negocio.
+
+```typescript
+// ✅
+@Get(':id')
+findOne(@Param('id') id: string): ApiSuccess<UserDto> {
+  return new ApiSuccess(this.usersService.findOne(id));
+}
+
+// ❌
+return user;
+throw new NotFoundException('not found');
+```
+
+## Services
+
+- Lanzar `BaseException` o subclases (`UserNotFoundException`, etc.).
+- Agregar código en `shared/error/error-code.ts` antes de crear excepciones nuevas.
+- **No** devolver `ApiSuccess` desde services (solo datos o void); el controller envuelve.
+
+```typescript
+// ✅
+findOne(id: string): UserDto {
+  const user = this.repo.findById(id);
+  if (!user) throw new UserNotFoundException(id);
+  return user;
+}
+
+// ❌
+return new ApiSuccess(user);
+throw new Error('not found');
+```
+
+## Nueva excepción de dominio
+
+1. Entrada en `ErrorCode` (`code` + `message`).
+2. Clase en `shared/exception/` extendiendo `BaseException` con `HttpStatus` adecuado.
+3. Export en `shared/exception/index.ts`.
+
+## Errores técnicos
+
+- Validación Nest / pipes → las captura `GlobalExceptionFilter` como `INVALID_REQUEST`.
+- No registrar otro exception filter salvo que el usuario lo pida.
+- `GlobalExceptionFilter` registrado como `APP_FILTER` en `app.module.ts`; replicarlo en tests e2e si creas app de prueba.
+
+## Checklist al crear controller + service
+
+- [ ] Controller retorna `ApiSuccess<T>`
+- [ ] Service lanza `BaseException` en reglas de negocio
+- [ ] Código de error en `ErrorCode` si es nuevo
+- [ ] Tests esperan envelope `{ success, data, error }`
+- [ ] Permisos: ver regla `nest-api-permissions` y `api/docs/endpoints-permissions.md`
+- [ ] Logging: ver regla `nest-api-logging` y `api/docs/logging.md`
+
+Referencia humana: [`api/docs/api-response.md`](api/docs/api-response.md). Código: `api/src/app.controller.ts`.

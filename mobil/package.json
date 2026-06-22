@@ -1,0 +1,45 @@
+{
+  "name": "agenda-escolar-digital",
+  "version": "1.0.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "lint": "tsc --noEmit",
+    "prebuild:android": "expo prebuild --platform android --clean",
+    "build:apk": "cd android && gradlew.bat assembleRelease --no-parallel",
+    "build:apk:local": "expo prebuild --platform android --clean && cd android && gradlew.bat assembleRelease --no-parallel",
+    "build:apk:debug": "expo prebuild --platform android --clean && cd android && gradlew.bat assembleDebug"
+  },
+  "dependencies": {
+    "@expo-google-fonts/nunito": "^0.2.3",
+    "@expo/metro-runtime": "~56.0.15",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@tanstack/react-query": "^5.101.0",
+    "expo": "~56.0.12",
+    "expo-constants": "~56.0.18",
+    "expo-font": "~56.0.7",
+    "expo-linear-gradient": "~56.0.4",
+    "expo-linking": "~56.0.14",
+    "expo-router": "~56.2.11",
+    "expo-status-bar": "~56.0.4",
+    "lucide-react-native": "^0.487.0",
+    "react": "19.2.3",
+    "react-native": "0.85.3",
+    "react-native-gesture-handler": "~2.31.1",
+    "react-native-reanimated": "~4.3.1",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.25.2",
+    "react-native-svg": "15.15.4",
+    "react-native-worklets": "0.8.3",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@types/react": "~19.2.14",
+    "babel-preset-expo": "^56.0.15",
+    "typescript": "~6.0.3"
+  }
+}

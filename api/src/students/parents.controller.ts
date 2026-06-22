@@ -1,0 +1,33 @@
+import { Controller, Get, Query } from '@nestjs/common';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
+import { RequirePermission } from '../iam/decorators/require-permission.decorator';
+import { ApiSuccess } from '../shared';
+import { UserScopeService } from '../shared/access/user-scope.service';
+import { ListParentsQueryDto } from './dto/list-students-query.dto';
+import { ParentResponseDto } from './dto/parent-response.dto';
+import { StudentsService } from './students.service';
+
+@Controller('parents')
+export class ParentsController {
+  constructor(
+    private readonly studentsService: StudentsService,
+    private readonly userScopeService: UserScopeService,
+  ) {}
+
+  @Get()
+  @RequirePermission('students.read')
+  async list(
+    @CurrentUser() auth: AuthenticatedUser,
+    @Query() query: ListParentsQueryDto,
+  ): Promise<ApiSuccess<ParentResponseDto[]>> {
+    const context = await this.userScopeService.loadContext(auth.userId);
+    const parents = await this.studentsService.listParents(
+      auth.schoolId,
+      context,
+      query.section,
+      query.studentId,
+    );
+    return new ApiSuccess(parents);
+  }
+}
