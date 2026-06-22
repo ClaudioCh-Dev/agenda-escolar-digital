@@ -1,4 +1,4 @@
-<div style="text-align: center;">
+<div style="text-align: center">
 
   <h2 style="margin-bottom: 10px;">
     CLICK AQUÍ PARA VER EL VIDEO
