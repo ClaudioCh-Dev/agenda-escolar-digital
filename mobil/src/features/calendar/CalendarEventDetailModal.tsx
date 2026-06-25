@@ -1,19 +1,24 @@
 import { useState } from 'react';
-import { View, Text, Pressable, Linking, Alert } from 'react-native';
+import { View, Text, Pressable, Alert } from 'react-native';
 import {
-  X, Pencil, Trash2, PartyPopper, FileText, Users, Drama, Star, BookOpen, AlertCircle,
-  Paperclip, Image as ImageIcon, Plus,
+  X, Pencil, Trash2, PartyPopper, FileText, Users, Drama, Star, BookOpen, AlertCircle, Plus,
 } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useTheme, mutedOutlineButtonStyle, cardShadow } from '@/theme';
 import { AppModal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { AttachmentSourceModal } from '@/components/features/AttachmentSourceModal';
+import { AttachmentListRow } from '@/components/features/AttachmentListRow';
+import { AttachmentImageViewerModal } from '@/components/features/AttachmentImageViewerModal';
 import { calendarEventTypeLabels, getCalendarTypeColors } from '@/constants/calendarTypes';
 import { formatModalDate } from '@/utils/dates';
 import { TODAY, USE_MOCK } from '@/constants/config';
+import { MAX_ATTACHMENT_HINT } from '@/constants/attachments';
 import { useUploadCalendarEventAttachment } from '@/queries/useCalendarEvents';
-import type { PickedAttachmentFile } from '@/services/api/attachments.api';
+import {
+  AttachmentSizeError,
+  type PickedAttachmentFile,
+} from '@/services/api/attachments.api';
 import type { CalendarEvent, SchoolCalendarEventType } from '@/types';
 
 const EVENT_ICONS: Record<CalendarEvent['type'], LucideIcon> = {
@@ -45,6 +50,7 @@ export function CalendarEventDetailModal({
   const { theme } = useTheme();
   const [showAttachmentSource, setShowAttachmentSource] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [viewingImage, setViewingImage] = useState<{ url: string; name: string } | null>(null);
   const uploadAttachment = useUploadCalendarEventAttachment();
 
   if (!event) return null;
@@ -72,8 +78,12 @@ export function CalendarEventDetailModal({
         onProgress: setUploadProgress,
       });
       setShowAttachmentSource(false);
-    } catch {
-      Alert.alert('Error', 'No se pudo subir el archivo. Verificá el tipo y que no supere 10 MB.');
+    } catch (error) {
+      if (error instanceof AttachmentSizeError) {
+        Alert.alert('Archivo muy grande', MAX_ATTACHMENT_HINT);
+      } else {
+        Alert.alert('Error', 'No se pudo subir el archivo. Verificá el tipo y que no supere 10 MB.');
+      }
     } finally {
       setUploadProgress(0);
     }
@@ -179,34 +189,11 @@ export function CalendarEventDetailModal({
           {(attachments.length > 0 || (canManage && !USE_MOCK)) && (
             <View style={{ marginTop: 16, gap: 8 }}>
               {attachments.map((att, i) => (
-                <Pressable
+                <AttachmentListRow
                   key={att.id ?? i}
-                  onPress={() => {
-                    if (att.url) void Linking.openURL(att.url);
-                  }}
-                  disabled={!att.url}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 10,
-                    paddingHorizontal: 12,
-                    paddingVertical: 10,
-                    borderRadius: 12,
-                    backgroundColor: theme.colors.muted,
-                  }}
-                >
-                  {att.fileType === 'image' ? (
-                    <ImageIcon size={14} color={theme.colors.mutedForeground} />
-                  ) : (
-                    <Paperclip size={14} color={theme.colors.mutedForeground} />
-                  )}
-                  <Text numberOfLines={1} style={{ flex: 1, fontFamily: theme.typography.fontFamilyBold, fontSize: 13, color: theme.colors.foreground }}>
-                    {att.name}
-                  </Text>
-                  <Text style={{ fontFamily: theme.typography.fontFamilyMedium, fontSize: 12, color: theme.colors.mutedForeground }}>
-                    {att.size}
-                  </Text>
-                </Pressable>
+                  attachment={att}
+                  onOpenImage={(url, name) => setViewingImage({ url, name })}
+                />
               ))}
 
               {canManage && !USE_MOCK && (
@@ -281,6 +268,13 @@ export function CalendarEventDetailModal({
         onPicked={file => void handleAttachmentPicked(file)}
         uploading={isUploadingAttachment}
         uploadProgress={uploadProgress}
+      />
+
+      <AttachmentImageViewerModal
+        visible={!!viewingImage}
+        url={viewingImage?.url ?? null}
+        name={viewingImage?.name}
+        onClose={() => setViewingImage(null)}
       />
     </>
   );

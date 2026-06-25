@@ -1,6 +1,11 @@
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import type { Attachment } from '@/types';
+import {
+  assertAttachmentSize,
+  AttachmentSizeError,
+  MAX_ATTACHMENT_HINT,
+} from '@/constants/attachments';
 import { apiFetch, apiUpload } from './client';
 import { mapAttachment } from './mappers';
 import type { AttachmentResponseDto, UploadAttachmentResponseDto } from './types';
@@ -9,7 +14,10 @@ export type PickedAttachmentFile = {
   uri: string;
   name: string;
   mimeType: string;
+  fileSize?: number;
 };
+
+export { AttachmentSizeError, MAX_ATTACHMENT_HINT };
 
 const IMAGE_PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
   mediaTypes: ['images'],
@@ -64,6 +72,7 @@ export async function pickImageAttachment(
     uri: asset.uri,
     name: asset.fileName ?? `foto_${Date.now()}.jpg`,
     mimeType: asset.mimeType ?? 'image/jpeg',
+    fileSize: asset.fileSize,
   };
 }
 
@@ -82,13 +91,19 @@ export async function pickDocumentAttachment(): Promise<PickedAttachmentFile | n
     uri: asset.uri,
     name: asset.name ?? 'archivo',
     mimeType: asset.mimeType ?? 'application/octet-stream',
+    fileSize: asset.size,
   };
+}
+
+function validateFileBeforeUpload(file: PickedAttachmentFile): void {
+  assertAttachmentSize(file.fileSize);
 }
 
 export async function uploadAttachment(
   file: PickedAttachmentFile,
   options?: { onProgress?: (percent: number) => void },
 ): Promise<Attachment> {
+  validateFileBeforeUpload(file);
   const uploaded = await apiUpload<UploadAttachmentResponseDto>(
     '/attachments/upload',
     buildFormData(file),
@@ -102,6 +117,7 @@ export async function uploadAttachmentToEntry(
   file: PickedAttachmentFile,
   options?: { onProgress?: (percent: number) => void },
 ): Promise<Attachment> {
+  validateFileBeforeUpload(file);
   const uploaded = await apiUpload<AttachmentResponseDto>(
     `/entries/${entryId}/attachments`,
     buildFormData(file),
@@ -115,6 +131,7 @@ export async function uploadAttachmentToCalendarEvent(
   file: PickedAttachmentFile,
   options?: { onProgress?: (percent: number) => void },
 ): Promise<Attachment> {
+  validateFileBeforeUpload(file);
   const uploaded = await apiUpload<AttachmentResponseDto>(
     `/calendar/events/${eventId}/attachments`,
     buildFormData(file),

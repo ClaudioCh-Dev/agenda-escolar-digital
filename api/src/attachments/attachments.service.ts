@@ -33,8 +33,10 @@ import {
   resolveAttachmentFileType,
   toAttachmentResponse,
 } from './attachment.mapper';
-
-const MAX_FILE_BYTES = 10 * 1024 * 1024;
+import {
+  MAX_ATTACHMENT_BYTES,
+  MAX_ATTACHMENT_ERROR_MESSAGE,
+} from './attachment-limits';
 const ALLOWED_MIME_PREFIXES = [
   'image/',
   'application/pdf',
@@ -306,8 +308,8 @@ export class AttachmentsService {
       throw new UnsupportedMediaTypeException('File is required');
     }
 
-    if (file.size > MAX_FILE_BYTES) {
-      throw new PayloadTooLargeException('File exceeds 10 MB limit');
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      throw new PayloadTooLargeException(MAX_ATTACHMENT_ERROR_MESSAGE);
     }
 
     const allowed =

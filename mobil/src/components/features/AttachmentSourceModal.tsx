@@ -1,6 +1,7 @@
 import { View, Text, Pressable, Alert, ActivityIndicator } from 'react-native';
 import { Camera, Image as ImageIcon, FileText } from 'lucide-react-native';
 import { useTheme } from '@/theme';
+import { MAX_ATTACHMENT_HINT } from '@/constants/attachments';
 import { AppModal } from '@/components/ui/Modal';
 import {
   pickDocumentAttachment,
@@ -104,6 +105,20 @@ export function AttachmentSourceModal({
         >
           Adjuntar archivo
         </Text>
+        {!uploading && (
+          <Text
+            style={{
+              fontFamily: theme.typography.fontFamilyMedium,
+              fontSize: 12,
+              color: theme.colors.mutedForeground,
+              textAlign: 'center',
+              marginBottom: 8,
+              paddingHorizontal: 20,
+            }}
+          >
+            {MAX_ATTACHMENT_HINT}
+          </Text>
+        )}
 
         {uploading ? (
           <View style={{ paddingHorizontal: 20, paddingVertical: 24, gap: 12 }}>

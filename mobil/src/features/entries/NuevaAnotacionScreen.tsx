@@ -20,6 +20,8 @@ import {
   cancelStagingAttachment,
   deleteAttachment,
   uploadAttachment,
+  AttachmentSizeError,
+  MAX_ATTACHMENT_HINT,
   type PickedAttachmentFile,
 } from '@/services/api/attachments.api';
 import { shortSectionLabel } from '@/utils/visibility';
@@ -272,7 +274,7 @@ function FormOptionsCard({
                 Adjuntos
               </Text>
               <Text style={{ fontFamily: theme.typography.fontFamilyMedium, fontSize: 12, color: theme.colors.mutedForeground, marginTop: 2 }}>
-                Foto, PDF o documento
+                Foto, PDF o documento · máx. 10 MB
               </Text>
             </View>
           </View>
@@ -474,8 +476,12 @@ export function NuevaAnotacionScreen() {
         onProgress: setUploadProgress,
       });
       setAttachments(prev => [...prev, uploaded]);
-    } catch {
-      Alert.alert('Error', 'No se pudo subir el archivo. Verificá el tipo y que no supere 10 MB.');
+    } catch (error) {
+      if (error instanceof AttachmentSizeError) {
+        Alert.alert('Archivo muy grande', MAX_ATTACHMENT_HINT);
+      } else {
+        Alert.alert('Error', 'No se pudo subir el archivo. Verificá el tipo y que no supere 10 MB.');
+      }
     } finally {
       setUploadingIndex(null);
       setUploadProgress(0);

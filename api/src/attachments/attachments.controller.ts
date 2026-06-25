@@ -14,6 +14,7 @@ import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.in
 import { RequirePermission } from '../iam/decorators/require-permission.decorator';
 import { ApiSuccess } from '../shared';
 import { AttachmentsService } from './attachments.service';
+import { MAX_ATTACHMENT_BYTES } from './attachment-limits';
 import {
   AttachmentResponseDto,
   UploadAttachmentResponseDto,
@@ -22,7 +23,7 @@ import { CancelStagingAttachmentDto } from './dto/cancel-staging.dto';
 
 const uploadOptions = {
   storage: memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: MAX_ATTACHMENT_BYTES },
 };
 
 @Controller('attachments')

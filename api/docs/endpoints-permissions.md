@@ -116,7 +116,7 @@ Registro vivo de rutas de la API Nest y su relación con permisos IAM (`permissi
 | POST | `/entries/:id/attachments` | `entries.update` | sí | implementado |
 | POST | `/calendar/events/:id/attachments` | `calendar.update` | sí | implementado |
 
-Los adjuntos en body de `POST/PATCH /entries` y `POST/PATCH /calendar/events` se sincronizan con Cloudinary (máx. 10 MB; PDF, imagen, documento).
+Los adjuntos en body de `POST/PATCH /entries` y `POST/PATCH /calendar/events` se sincronizan con Cloudinary (máx. **10 MB** por archivo — imagen, PDF o Word; pensado para comunicados cortos, ~10 páginas).
 
 `POST /entries/:id/attachments`, `POST /calendar/events/:id/attachments` y `DELETE /attachments/:id` aplican las mismas reglas de edición que `PATCH` (autor, o auxiliar/dirección con sección en scope).
 
