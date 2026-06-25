@@ -111,11 +111,14 @@ Registro vivo de rutas de la API Nest y su relación con permisos IAM (`permissi
 | Método | Ruta | Permiso | Guard RBAC | Estado |
 |--------|------|---------|------------|--------|
 | POST | `/attachments/upload` | `entries.create` o `calendar.create` | sí | implementado |
+| DELETE | `/attachments/staging` | `entries.create` o `calendar.create` | sí | implementado |
 | DELETE | `/attachments/:id` | `entries.update` o `calendar.update` | sí | implementado |
 | POST | `/entries/:id/attachments` | `entries.update` | sí | implementado |
 | POST | `/calendar/events/:id/attachments` | `calendar.update` | sí | implementado |
 
-Los adjuntos también se envían en el body de `POST/PATCH /entries` y `POST/PATCH /calendar/events` como array `attachments` (metadatos tras subir a Cloudinary).
+Los adjuntos en body de `POST/PATCH /entries` y `POST/PATCH /calendar/events` se sincronizan con Cloudinary (máx. 10 MB; PDF, imagen, documento).
+
+`POST /entries/:id/attachments`, `POST /calendar/events/:id/attachments` y `DELETE /attachments/:id` aplican las mismas reglas de edición que `PATCH` (autor, o auxiliar/dirección con sección en scope).
 
 ---
 
@@ -136,6 +139,8 @@ Rutas que **no** usan `permissions` (públicas o solo requieren sesión JWT).
 | POST | `/auth/logout` | implementado | Revocar refresh token | `@Public()` |
 | PATCH | `/auth/password` | implementado | Cambio contraseña propia | JWT |
 | GET | `/users/me` | implementado | Perfil del usuario logueado | JWT |
+| POST | `/users/me/avatar` | implementado | Subir foto de perfil propia (imagen, máx. 5 MB) | JWT |
+| DELETE | `/users/me/avatar` | implementado | Quitar foto de perfil propia | JWT |
 
 ---
 

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RoleEntity } from '../iam/entities/role.entity';
 import { UserRoleEntity } from '../iam/entities/user-role.entity';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 import { IamModule } from '../iam/iam.module';
 import { SchoolsModule } from '../schools/schools.module';
 import { ParentStudentEntity } from './entities/parent-student.entity';
@@ -14,6 +15,7 @@ import { UsersService } from './users.service';
 
 @Module({
   imports: [
+    CloudinaryModule,
     SchoolsModule,
     IamModule,
     TypeOrmModule.forFeature([

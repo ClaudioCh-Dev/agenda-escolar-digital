@@ -1,18 +1,22 @@
 import type { AppNotification } from '@/types';
-import { notImplemented } from './client';
+import { apiFetch } from './client';
+import { mapNotification } from './mappers';
+import type { NotificationResponseDto } from './types';
 
 export async function listNotifications(): Promise<AppNotification[]> {
-  notImplemented('GET /notifications');
+  const data = await apiFetch<NotificationResponseDto[]>('/notifications');
+  return data.map(mapNotification);
 }
 
-export async function markAsRead(_id: string): Promise<void> {
-  notImplemented('PATCH /notifications/:id/read');
+export async function markAsRead(id: string): Promise<void> {
+  await apiFetch<null>(`/notifications/${id}/read`, { method: 'PATCH' });
 }
 
 export async function markAllAsRead(): Promise<void> {
-  notImplemented('PATCH /notifications/read-all');
+  await apiFetch<null>('/notifications/read-all', { method: 'PATCH' });
 }
 
 export async function getUnreadCount(): Promise<number> {
-  notImplemented('GET /notifications/unread-count');
+  const data = await apiFetch<{ count: number }>('/notifications/unread-count');
+  return data.count;
 }

@@ -2,7 +2,7 @@
 -- Referencia de tablas, migraciones y vistas pendientes.
 -- Descomentar y ejecutar en orden cuando la app use horarios y cursos.
 --
--- Requiere: esquema activo (01 → 02 → 03) ya aplicado.
+-- Requiere: migraciones V1…V3 ya aplicadas (ver database/migrations/).
 
 -- ===========================================================================
 -- Cursos / materias

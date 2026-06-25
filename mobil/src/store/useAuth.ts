@@ -10,6 +10,7 @@ export function useAuth() {
   const logout = useAuthStore(s => s.logout);
   const setSelectedSection = useAuthStore(s => s.setSelectedSection);
   const setSelectedChild = useAuthStore(s => s.setSelectedChild);
+  const updateUser = useAuthStore(s => s.updateUser);
 
   return {
     user,
@@ -21,6 +22,7 @@ export function useAuth() {
     logout,
     setSelectedSection,
     setSelectedChild,
+    updateUser,
   };
 }
 

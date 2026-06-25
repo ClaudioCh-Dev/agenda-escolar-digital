@@ -5,6 +5,7 @@ import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.in
 import { NotificationsService } from '../notifications/notifications.service';
 import { AttachmentsService } from '../attachments/attachments.service';
 import { SectionScopeService } from '../shared/access/section-scope.service';
+import { canModifyCalendarEvent } from '../shared/access/entry-modify.util';
 import { UserScopeService } from '../shared/access/user-scope.service';
 import { ForbiddenException } from '../shared/exception/forbidden.exception';
 import { NotFoundException } from '../shared/exception/not-found.exception';
@@ -119,10 +120,12 @@ export class CalendarService {
       }),
     );
 
-    await this.attachmentsService.syncForCalendarEvent(
-      event.id,
-      dto.attachments,
-    );
+    if (dto.attachments?.length) {
+      await this.attachmentsService.syncForCalendarEvent(
+        event.id,
+        dto.attachments,
+      );
+    }
 
     const saved = await this.findEventOrThrow(event.id, auth.schoolId);
 
@@ -241,24 +244,9 @@ export class CalendarService {
     event: CalendarEventEntity,
     userId: string,
   ): void {
-    if (event.authorId === userId) {
-      return;
+    if (!canModifyCalendarEvent(event, context, userId)) {
+      throw new ForbiddenException();
     }
-
-    if (context.primaryRole === 'direccion') {
-      return;
-    }
-
-    if (
-      (context.primaryRole === 'auxiliar' ||
-        context.primaryRole === 'profesor') &&
-      event.sectionId &&
-      context.sectionIds.includes(event.sectionId)
-    ) {
-      return;
-    }
-
-    throw new ForbiddenException();
   }
 
   private async findEventOrThrow(

@@ -46,6 +46,15 @@ function dockerHostJdbcUrl(jdbcUrl) {
     .replace('127.0.0.1', 'host.docker.internal');
 }
 
+function commandExists(cmd) {
+  const checker = process.platform === 'win32' ? 'where' : 'which';
+  const result = spawnSync(checker, [cmd], {
+    encoding: 'utf8',
+    shell: process.platform === 'win32',
+  });
+  return result.status === 0 && Boolean(result.stdout?.trim());
+}
+
 function runFlyway(executable, args, cwd) {
   const result = spawnSync(executable, args, {
     cwd,
@@ -81,16 +90,16 @@ const flywayArgs = [
   `-locations=filesystem:${migrationsDir}`,
 ];
 
-const native = runFlyway('flyway', flywayArgs, apiRoot);
-if (native.ok) {
-  process.exit(0);
+if (commandExists('flyway')) {
+  const native = runFlyway('flyway', flywayArgs, apiRoot);
+  if (native.ok) {
+    process.exit(0);
+  }
+  process.exit(native.status ?? 1);
 }
 
-if (!native.missing) {
-  process.exit(native.status);
-}
-
-console.log('Flyway CLI not found locally, trying Docker (flyway/flyway:11-alpine)...');
+if (commandExists('docker')) {
+  console.log('Flyway CLI not found locally, trying Docker (flyway/flyway:11-alpine)...');
 
 const dockerMigrations = migrationsDir.replace(/\\/g, '/');
 const dockerConfig = configFile.replace(/\\/g, '/');
@@ -111,11 +120,16 @@ const dockerArgs = [
 ];
 
 const docker = runFlyway('docker', dockerArgs, apiRoot);
-if (docker.ok) {
-  process.exit(0);
+  if (docker.ok) {
+    process.exit(0);
+  }
+  process.exit(docker.status ?? 1);
 }
 
-console.error(
-  'Could not run Flyway. Install Flyway CLI or Docker, then retry: pnpm db:migrate',
-);
-process.exit(docker.status ?? 1);
+console.log('Flyway/Docker unavailable, using Node migrator (scripts/migrate.mjs)...');
+const nodeMigrate = spawnSync('node', ['scripts/migrate.mjs'], {
+  cwd: apiRoot,
+  stdio: 'inherit',
+  shell: process.platform === 'win32',
+});
+process.exit(nodeMigrate.status ?? 1);

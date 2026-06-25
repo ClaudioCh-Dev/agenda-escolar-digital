@@ -1,5 +1,7 @@
-import type { Entry, CreateEntryDto, UpdateEntryDto, Role } from '@/types';
-import { notImplemented } from './client';
+import type { Entry, CreateEntryDto, UpdateEntryDto } from '@/types';
+import { apiFetch, buildQuery } from './client';
+import { mapEntry, toCreateEntryPayload, toUpdateEntryPayload } from './mappers';
+import type { EntryResponseDto } from './types';
 import type { CreateEntryMeta, UpdateEntryOptions } from '../entries.service';
 
 export interface ListEntriesParams {
@@ -10,30 +12,42 @@ export interface ListEntriesParams {
   to?: string;
 }
 
-export async function listEntries(_params?: ListEntriesParams): Promise<Entry[]> {
-  notImplemented('GET /entries');
+export async function listEntries(params?: ListEntriesParams): Promise<Entry[]> {
+  const data = await apiFetch<EntryResponseDto[]>(
+    `/entries${buildQuery(params)}`,
+  );
+  return data.map(mapEntry);
 }
 
-export async function getEntry(_id: string): Promise<Entry> {
-  notImplemented('GET /entries/:id');
+export async function getEntry(id: string): Promise<Entry> {
+  const data = await apiFetch<EntryResponseDto>(`/entries/${id}`);
+  return mapEntry(data);
 }
 
-export async function createEntry(_data: CreateEntryDto, _meta: CreateEntryMeta): Promise<Entry> {
-  notImplemented('POST /entries');
+export async function createEntry(data: CreateEntryDto, meta: CreateEntryMeta): Promise<Entry> {
+  const created = await apiFetch<EntryResponseDto>('/entries', {
+    method: 'POST',
+    body: JSON.stringify(toCreateEntryPayload(data, meta)),
+  });
+  return mapEntry(created);
 }
 
 export async function updateEntry(
-  _id: string,
-  _data: UpdateEntryDto,
-  _options?: UpdateEntryOptions,
+  id: string,
+  data: UpdateEntryDto,
+  options?: UpdateEntryOptions,
 ): Promise<Entry> {
-  notImplemented('PATCH /entries/:id');
+  const updated = await apiFetch<EntryResponseDto>(`/entries/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(toUpdateEntryPayload(data, options)),
+  });
+  return mapEntry(updated);
 }
 
-export async function deleteEntry(_id: string): Promise<void> {
-  notImplemented('DELETE /entries/:id');
+export async function deleteEntry(id: string): Promise<void> {
+  await apiFetch<null>(`/entries/${id}`, { method: 'DELETE' });
 }
 
-export async function confirmEntryRead(_id: string, _userId: string): Promise<void> {
-  notImplemented('POST /entries/:id/read');
+export async function confirmEntryRead(id: string, _userId: string): Promise<void> {
+  await apiFetch<null>(`/entries/${id}/read`, { method: 'POST' });
 }

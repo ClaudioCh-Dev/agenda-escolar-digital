@@ -42,6 +42,9 @@ export class UserEntity {
   @Column({ name: 'avatar_url', type: 'text', nullable: true })
   avatarUrl: string | null;
 
+  @Column({ name: 'avatar_cloudinary_public_id', type: 'text', nullable: true })
+  avatarCloudinaryPublicId: string | null;
+
   @Column({ name: 'primary_sede_id', type: 'uuid', nullable: true })
   primarySedeId: string | null;
 

@@ -3,8 +3,22 @@ import { MOCK_USERS } from '@/data/mocks';
 import { mockStore } from './store';
 import type { ChangePasswordDto, LoginCredentials } from '../api/auth.api';
 
+const CODE_TO_EMAIL: Record<string, string> = {
+  t10000001: 'auxiliar@colegio.edu',
+  p10000001: 'padre@colegio.edu',
+  e10000001: 'alumno@colegio.edu',
+  'auxiliar@colegio.edu': 'auxiliar@colegio.edu',
+  'padre@colegio.edu': 'padre@colegio.edu',
+  'alumno@colegio.edu': 'alumno@colegio.edu',
+};
+
+function resolveMockEmail(code: string): string {
+  return CODE_TO_EMAIL[code.trim().toLowerCase()] ?? code.trim().toLowerCase();
+}
+
 export async function login(credentials: LoginCredentials): Promise<User> {
-  const user = MOCK_USERS.find(u => u.email === credentials.email);
+  const email = resolveMockEmail(credentials.code);
+  const user = MOCK_USERS.find(u => u.email === email);
   if (!user) throw new Error('Usuario no encontrado');
   mockStore.currentUser = user;
   return user;

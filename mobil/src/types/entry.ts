@@ -12,9 +12,13 @@ export type EntryType =
   | 'personalizado';
 
 export interface Attachment {
+  id?: string;
   name: string;
   size: string;
   fileType: 'pdf' | 'image' | 'doc';
+  url?: string;
+  publicId?: string;
+  storageUrl?: string;
 }
 
 export interface Entry {

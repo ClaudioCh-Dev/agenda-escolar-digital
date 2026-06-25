@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CalendarEventEntity } from '../calendar/entities/calendar-event.entity';
+import { AttachmentsModule } from '../attachments/attachments.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { AccessModule } from '../shared/access/access.module';
-import { AttachmentsModule } from '../attachments/attachments.module';
 import { EntryReadEntity } from './entities/entry-read.entity';
 import { EntryStudentEntity } from './entities/entry-student.entity';
 import { EntryEntity } from './entities/entry.entity';

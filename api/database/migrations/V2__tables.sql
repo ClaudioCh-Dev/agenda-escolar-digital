@@ -80,6 +80,7 @@ CREATE TABLE users (
   password_hash   TEXT NOT NULL,
   name            TEXT NOT NULL,
   avatar_url      TEXT,
+  avatar_cloudinary_public_id TEXT,
   primary_sede_id UUID REFERENCES sedes (id) ON DELETE SET NULL,
   is_active       BOOLEAN NOT NULL DEFAULT true,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -222,7 +223,8 @@ CREATE TABLE attachments (
   name              TEXT NOT NULL,
   size_label        TEXT NOT NULL,          -- ej. "1.2 MB"
   file_type         attachment_file_type NOT NULL,
-  storage_url       TEXT NOT NULL,                   -- URL en Azure Blob / S3 / etc.
+  storage_url       TEXT NOT NULL,                   -- URL en Cloudinary
+  cloudinary_public_id TEXT,                         -- public_id para borrado remoto
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
   CHECK (entry_id IS NOT NULL OR calendar_event_id IS NOT NULL)
 );

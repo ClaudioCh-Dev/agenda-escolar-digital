@@ -6,7 +6,11 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
 import { RequirePermission } from '../iam/decorators/require-permission.decorator';
@@ -19,6 +23,11 @@ import {
 import { UserProfileDto } from './dto/user-profile.dto';
 import { UsersService } from './users.service';
 
+const avatarUploadOptions = {
+  storage: memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+};
+
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -30,6 +39,22 @@ export class UsersController {
     return this.usersService
       .findProfileById(user.userId)
       .then((profile) => new ApiSuccess(profile));
+  }
+
+  @Post('me/avatar')
+  @UseInterceptors(FileInterceptor('file', avatarUploadOptions))
+  async uploadAvatar(
+    @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<ApiSuccess<UserProfileDto>> {
+    return new ApiSuccess(await this.usersService.updateOwnAvatar(user, file));
+  }
+
+  @Delete('me/avatar')
+  async removeAvatar(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ApiSuccess<UserProfileDto>> {
+    return new ApiSuccess(await this.usersService.removeOwnAvatar(user));
   }
 
   @Get()

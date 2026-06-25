@@ -1,5 +1,5 @@
-import { useMemo, useState, type ReactNode } from 'react';
-import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { View, Text, Pressable, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import {
   ChevronLeft, Check, BookOpen, User, Package, Eye, Bell, Megaphone, FileText, Star,
   AlertCircle, PartyPopper, Users, Drama, Paperclip, File, Plus, X,
@@ -11,10 +11,17 @@ import { useAuth } from '@/store/useAuth';
 import { useEntries, useCreateEntry, useUpdateEntry } from '@/queries/useEntries';
 import { useCalendarEvents, useCreateCalendarEvent, useUpdateCalendarEvent } from '@/queries/useCalendarEvents';
 import { useStudentsBySection } from '@/queries/useStudents';
-import { TODAY } from '@/constants/config';
+import { TODAY, USE_MOCK } from '@/constants/config';
 import { entryTypeConfig, REGISTRO_TYPE_OPTIONS } from '@/constants/entryTypes';
 import { calendarEventTypeLabels, SCHOOL_CALENDAR_EVENT_TYPES, getCalendarTypeColors } from '@/constants/calendarTypes';
 import { getStudentName } from '@/services';
+import { AttachmentSourceModal } from '@/components/features/AttachmentSourceModal';
+import {
+  cancelStagingAttachment,
+  deleteAttachment,
+  uploadAttachment,
+  type PickedAttachmentFile,
+} from '@/services/api/attachments.api';
 import { shortSectionLabel } from '@/utils/visibility';
 import { defaultRequiresAckForType } from '@/utils/ack';
 import type { EntryType, SchoolCalendarEventType, Attachment } from '@/types';
@@ -138,6 +145,9 @@ function FormOptionsCard({
   attachments,
   onAddAttachment,
   onRemoveAttachment,
+  uploadingIndex = null,
+  uploadProgress = 0,
+  addDisabled = false,
 }: {
   isImportant: boolean;
   onImportantChange: (value: boolean) => void;
@@ -147,9 +157,12 @@ function FormOptionsCard({
   showRequiresAck?: boolean;
   requiresAck?: boolean;
   onRequiresAckChange?: (value: boolean) => void;
-  attachments: string[];
+  attachments: Attachment[];
   onAddAttachment: () => void;
   onRemoveAttachment: (index: number) => void;
+  uploadingIndex?: number | null;
+  uploadProgress?: number;
+  addDisabled?: boolean;
 }) {
   const { theme } = useTheme();
 
@@ -259,13 +272,14 @@ function FormOptionsCard({
                 Adjuntos
               </Text>
               <Text style={{ fontFamily: theme.typography.fontFamilyMedium, fontSize: 12, color: theme.colors.mutedForeground, marginTop: 2 }}>
-                PDF, imagen, documento
+                Foto, PDF o documento
               </Text>
             </View>
           </View>
           <Pressable
             onPress={onAddAttachment}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: 4 }}
+            disabled={addDisabled}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: 4, opacity: addDisabled ? 0.5 : 1 }}
           >
             <Plus size={14} color={theme.colors.mutedForeground} strokeWidth={2.5} />
             <Text style={{ fontFamily: theme.typography.fontFamilyBold, fontSize: 12, color: theme.colors.mutedForeground }}>
@@ -274,11 +288,11 @@ function FormOptionsCard({
           </Pressable>
         </View>
 
-        {attachments.length > 0 && (
+        {(attachments.length > 0 || uploadingIndex !== null) && (
           <View style={{ gap: 6, marginTop: 8 }}>
-            {attachments.map((name, index) => (
+            {attachments.map((att, index) => (
               <View
-                key={`${name}-${index}`}
+                key={`${att.name}-${att.publicId ?? att.id ?? index}`}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -294,13 +308,40 @@ function FormOptionsCard({
                   numberOfLines={1}
                   style={{ flex: 1, fontFamily: theme.typography.fontFamilyBold, fontSize: 12, color: theme.colors.foreground }}
                 >
-                  {name}
+                  {att.name}
                 </Text>
-                <Pressable onPress={() => onRemoveAttachment(index)} hitSlop={8}>
+                <Pressable onPress={() => onRemoveAttachment(index)} hitSlop={8} disabled={uploadingIndex !== null}>
                   <X size={13} color={theme.colors.mutedForeground} />
                 </Pressable>
               </View>
             ))}
+            {uploadingIndex !== null && (
+              <View
+                style={{
+                  paddingHorizontal: 10,
+                  paddingVertical: 10,
+                  borderRadius: 12,
+                  backgroundColor: theme.colors.muted,
+                  gap: 6,
+                }}
+              >
+                <Text style={{ fontFamily: theme.typography.fontFamilyBold, fontSize: 12, color: theme.colors.foreground }}>
+                  Subiendo archivo…
+                </Text>
+                <View style={{ height: 4, borderRadius: 2, backgroundColor: theme.colors.border, overflow: 'hidden' }}>
+                  <View
+                    style={{
+                      height: '100%',
+                      width: `${uploadProgress}%`,
+                      backgroundColor: theme.colors.primary,
+                    }}
+                  />
+                </View>
+                <Text style={{ fontFamily: theme.typography.fontFamilyMedium, fontSize: 10, color: theme.colors.mutedForeground }}>
+                  {uploadProgress}%
+                </Text>
+              </View>
+            )}
           </View>
         )}
       </View>
@@ -376,22 +417,90 @@ export function NuevaAnotacionScreen() {
   const [requiresAck, setRequiresAck] = useState(
     editingEntry?.requiresAck ?? defaultRequiresAckForType(editingEntry?.type ?? 'tarea'),
   );
-  const [attachments, setAttachments] = useState<string[]>(() => {
-    if (editingEntry?.attachments?.length) return editingEntry.attachments.map(a => a.name);
-    if (editingCalendarEvent?.attachments?.length) return editingCalendarEvent.attachments.map(a => a.name);
+  const [attachments, setAttachments] = useState<Attachment[]>(() => {
+    if (editingEntry?.attachments?.length) return [...editingEntry.attachments];
+    if (editingCalendarEvent?.attachments?.length) return [...editingCalendarEvent.attachments];
     return [];
   });
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const attachmentsRef = useRef(attachments);
+  attachmentsRef.current = attachments;
   const [submitted, setSubmitted] = useState(false);
   const [submittedMode, setSubmittedMode] = useState<FormMode>('registro');
   const [successMessage, setSuccessMessage] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showAttachmentSource, setShowAttachmentSource] = useState(false);
 
   const isPersonalizado = selectedType === 'personalizado';
   const isRegistro = mode === 'registro';
+  const isUploading = uploadingIndex !== null;
 
-  const buildAttachments = (): Attachment[] =>
-    attachments.map(name => ({ name, size: '1.0 MB', fileType: 'pdf' }));
+  useEffect(() => {
+    return () => {
+      if (USE_MOCK) return;
+      for (const att of attachmentsRef.current) {
+        if (!att.id && att.publicId) {
+          void cancelStagingAttachment(att.publicId).catch(() => undefined);
+        }
+      }
+    };
+  }, []);
+
+  const handleAddAttachment = () => {
+    if (isUploading) return;
+
+    if (USE_MOCK) {
+      setAttachments(prev => [
+        ...prev,
+        { name: `archivo_${prev.length + 1}.pdf`, size: '1.0 MB', fileType: 'pdf' },
+      ]);
+      return;
+    }
+
+    setShowAttachmentSource(true);
+  };
+
+  const handleAttachmentPicked = async (file: PickedAttachmentFile) => {
+    setShowAttachmentSource(false);
+
+    const nextIndex = attachments.length;
+    setUploadingIndex(nextIndex);
+    setUploadProgress(0);
+
+    try {
+      const uploaded = await uploadAttachment(file, {
+        onProgress: setUploadProgress,
+      });
+      setAttachments(prev => [...prev, uploaded]);
+    } catch {
+      Alert.alert('Error', 'No se pudo subir el archivo. Verificá el tipo y que no supere 10 MB.');
+    } finally {
+      setUploadingIndex(null);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleRemoveAttachment = async (index: number) => {
+    const att = attachments[index];
+    if (!att) return;
+
+    if (!USE_MOCK) {
+      try {
+        if (att.id) {
+          await deleteAttachment(att.id);
+        } else if (att.publicId) {
+          await cancelStagingAttachment(att.publicId);
+        }
+      } catch {
+        Alert.alert('Error', 'No se pudo eliminar el adjunto.');
+        return;
+      }
+    }
+
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
 
   const validateRegistro = () => {
     const errs: Record<string, string> = {};
@@ -429,7 +538,7 @@ export function NuevaAnotacionScreen() {
       isImportant,
       parentsOnly,
       requiresAck,
-      attachments: buildAttachments(),
+      attachments,
       section: selectedSection,
       studentId,
       studentIds: studentIds && studentIds.length > 1 ? studentIds : undefined,
@@ -472,7 +581,7 @@ export function NuevaAnotacionScreen() {
       date: eventDate,
       type: calendarType,
       isImportant,
-      attachments: buildAttachments(),
+      attachments,
     };
 
     if (isEditingCalendar && editingCalendarEvent) {
@@ -671,8 +780,11 @@ export function NuevaAnotacionScreen() {
           parentsOnly={parentsOnly}
           onParentsOnlyChange={setParentsOnly}
           attachments={attachments}
-          onAddAttachment={() => setAttachments(prev => [...prev, `archivo_${prev.length + 1}.pdf`])}
-          onRemoveAttachment={index => setAttachments(prev => prev.filter((_, i) => i !== index))}
+          onAddAttachment={() => void handleAddAttachment()}
+          onRemoveAttachment={index => void handleRemoveAttachment(index)}
+          uploadingIndex={uploadingIndex}
+          uploadProgress={uploadProgress}
+          addDisabled={isUploading || isLoading}
         />
 
         {errors.section && (
@@ -683,11 +795,17 @@ export function NuevaAnotacionScreen() {
           <Button
             label={isLoading ? '' : isEditing ? 'Guardar cambios' : isRegistro ? 'Guardar registro' : 'Programar evento'}
             onPress={handleSubmit}
-            disabled={isLoading}
+            disabled={isLoading || isUploading}
             icon={isLoading ? <ActivityIndicator color="#fff" /> : <Check size={20} color="#fff" />}
           />
         </View>
       </Screen>
+
+      <AttachmentSourceModal
+        visible={showAttachmentSource}
+        onClose={() => setShowAttachmentSource(false)}
+        onPicked={file => void handleAttachmentPicked(file)}
+      />
     </View>
   );
 }

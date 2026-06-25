@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Delete,
   Param,
@@ -17,6 +18,7 @@ import {
   AttachmentResponseDto,
   UploadAttachmentResponseDto,
 } from './dto/attachment.dto';
+import { CancelStagingAttachmentDto } from './dto/cancel-staging.dto';
 
 const uploadOptions = {
   storage: memoryStorage(),
@@ -35,6 +37,16 @@ export class AttachmentsController {
     @UploadedFile() file: Express.Multer.File,
   ): Promise<ApiSuccess<UploadAttachmentResponseDto>> {
     return new ApiSuccess(await this.attachmentsService.uploadFile(auth, file));
+  }
+
+  @Delete('staging')
+  @RequirePermission('entries.create', 'calendar.create')
+  async cancelStaging(
+    @CurrentUser() auth: AuthenticatedUser,
+    @Body() dto: CancelStagingAttachmentDto,
+  ): Promise<ApiSuccess<null>> {
+    await this.attachmentsService.cancelStagingUpload(auth, dto.publicId);
+    return new ApiSuccess(null);
   }
 
   @Delete(':id')

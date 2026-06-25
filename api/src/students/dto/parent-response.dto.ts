@@ -1,3 +1,5 @@
+import type { UserChildDto } from '../../users/dto/user-profile.dto';
+
 export class ParentResponseDto {
   id!: string;
   name!: string;
@@ -6,4 +8,5 @@ export class ParentResponseDto {
   initials!: string;
   avatar?: string;
   sections?: string[];
+  children?: UserChildDto[];
 }

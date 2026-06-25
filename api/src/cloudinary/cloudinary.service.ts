@@ -3,11 +3,16 @@ import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary, type UploadApiResponse } from 'cloudinary';
 import { BaseException } from '../shared/exception/base.exception';
 import { ErrorCode } from '../shared/error/error-code';
+import { DEFAULT_CLOUDINARY_FOLDER } from './cloudinary-paths';
 
 export interface CloudinaryUploadResult {
   storageUrl: string;
   publicId: string;
   bytes: number;
+}
+
+export interface CloudinaryUploadOptions {
+  transformation?: Record<string, unknown>[];
 }
 
 @Injectable()
@@ -33,24 +38,32 @@ export class CloudinaryService {
     return this.configured;
   }
 
+  getRootFolder(): string {
+    return (
+      this.configService.get<string>('CLOUDINARY_FOLDER') ??
+      DEFAULT_CLOUDINARY_FOLDER
+    );
+  }
+
   uploadBuffer(
     buffer: Buffer,
     originalName: string,
     mimeType: string,
-    schoolId: string,
+    folder: string,
+    options?: CloudinaryUploadOptions,
   ): Promise<CloudinaryUploadResult> {
     this.assertConfigured();
-
-    const folder =
-      this.configService.get<string>('CLOUDINARY_FOLDER') ?? 'agenda-escolar';
 
     return new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
-          folder: `${folder}/${schoolId}`,
+          folder,
           resource_type: 'auto',
           use_filename: true,
           unique_filename: true,
+          ...(options?.transformation
+            ? { transformation: options.transformation }
+            : {}),
         },
         (error, result: UploadApiResponse | undefined) => {
           if (error || !result) {

@@ -7,6 +7,10 @@ import {
   deleteEntry,
   confirmEntryRead,
 } from '@/services/entries.service';
+import {
+  uploadAttachmentToEntry,
+  type PickedAttachmentFile,
+} from '@/services/api/attachments.api';
 import { queryKeys } from './keys';
 import { useAuthStore } from '@/store/authStore';
 
@@ -73,6 +77,21 @@ export function useConfirmEntryRead() {
       if (!user) throw new Error('Not authenticated');
       return confirmEntryRead(entryId, user.id);
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.entries });
+    },
+  });
+}
+
+export function useUploadEntryAttachment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: {
+      entryId: string;
+      file: PickedAttachmentFile;
+      onProgress?: (percent: number) => void;
+    }) => uploadAttachmentToEntry(params.entryId, params.file, { onProgress: params.onProgress }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.entries });
     },

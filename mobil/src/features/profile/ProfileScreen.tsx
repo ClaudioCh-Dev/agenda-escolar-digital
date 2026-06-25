@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from 'react';
-import { View, Text, Pressable, ScrollView, Image, type ImageSourcePropType } from 'react-native';
+import { View, Text, Pressable, ScrollView, type ImageSourcePropType } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  LogOut, Bell, Moon, Sun, ChevronRight, Shield, GraduationCap, Settings, HelpCircle, BookOpen, Mail, Clock,
+  LogOut, Bell, Moon, Sun, ChevronRight, Shield, GraduationCap, Settings, HelpCircle, BookOpen, Mail, Clock, Camera,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme, cardShadow } from '@/theme';
@@ -11,6 +11,8 @@ import { useUnreadNotificationsCount } from '@/queries/useNotifications';
 import { Toggle } from '@/components/ui/Toggle';
 import { TopBar } from '@/components/layout/TopBar';
 import { SoftStairBarsBackground } from '@/components/ui/SoftStairBarsBackground';
+import { UserAvatar } from '@/components/features/UserAvatar';
+import { AvatarPickerModal } from '@/features/profile/AvatarPickerModal';
 import { shortSectionLabel } from '@/utils/visibility';
 
 const ROLE_LABEL = {
@@ -227,9 +229,10 @@ function ToggleRow({
 export function ProfileScreen() {
   const { theme, isDark, setDarkMode } = useTheme();
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const unreadNotifications = useUnreadNotificationsCount();
   const [notifications, setNotifications] = useState({ push: true, email: false, reminders: true });
+  const [avatarModalVisible, setAvatarModalVisible] = useState(false);
 
   if (!user) return null;
 
@@ -262,34 +265,40 @@ export function ProfileScreen() {
           <View style={{ position: 'relative', zIndex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20, minHeight: 64 }}>
               <View style={{ width: 80, alignItems: 'center' }}>
-                {avatarSource ? (
-                  <Image
-                    source={avatarSource}
-                    style={{ width: 64, height: 64, borderRadius: 24 }}
+                <Pressable onPress={() => setAvatarModalVisible(true)} style={{ position: 'relative' }}>
+                  <UserAvatar
+                    name={user.name}
+                    initials={user.initials}
+                    avatar={user.avatar}
+                    fallbackSource={avatarSource}
+                    size={64}
+                    borderRadius={24}
                   />
-                ) : (
                   <View
                     style={{
-                      width: 64,
-                      height: 64,
-                      borderRadius: 24,
-                      backgroundColor: theme.colors.foreground,
+                      position: 'absolute',
+                      right: -2,
+                      bottom: -2,
+                      width: 24,
+                      height: 24,
+                      borderRadius: 12,
+                      backgroundColor: theme.colors.primary,
                       alignItems: 'center',
                       justifyContent: 'center',
+                      borderWidth: 2,
+                      borderColor: theme.colors.card,
                     }}
                   >
-                    <Text style={{ fontFamily: theme.typography.fontFamilyBlack, fontSize: 22, color: theme.colors.primaryForeground }}>
-                      {user.initials}
-                    </Text>
+                    <Camera size={12} color={theme.colors.primaryForeground} strokeWidth={2.25} />
                   </View>
-                )}
+                </Pressable>
               </View>
               <View style={{ flex: 1, alignItems: 'center' }}>
                 <Text style={{ fontFamily: theme.typography.fontFamilyBlack, fontSize: 20, color: theme.colors.foreground, letterSpacing: -0.5, textAlign: 'center' }}>
                   {user.name}
                 </Text>
                 <Text style={{ fontFamily: theme.typography.fontFamilyMedium, fontSize: 14, color: theme.colors.mutedForeground, marginTop: 2, textAlign: 'center' }}>
-                  {user.email}
+                  {user.code ?? user.email}
                 </Text>
                 <View style={{ marginTop: 8, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: theme.colors.muted }}>
                   <Text style={{ fontFamily: theme.typography.fontFamilyBold, fontSize: 12, color: theme.colors.mutedForeground }}>
@@ -479,6 +488,13 @@ export function ProfileScreen() {
           </Text>
         </Pressable>
       </ScrollView>
+
+      <AvatarPickerModal
+        visible={avatarModalVisible}
+        user={user}
+        onClose={() => setAvatarModalVisible(false)}
+        onUpdated={updateUser}
+      />
     </View>
   );
 }

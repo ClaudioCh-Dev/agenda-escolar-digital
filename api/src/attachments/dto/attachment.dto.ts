@@ -6,6 +6,7 @@ export class AttachmentResponseDto {
   size!: string;
   fileType!: AttachmentFileType;
   url!: string;
+  publicId?: string;
 }
 
 export class UploadAttachmentResponseDto {

@@ -13,6 +13,7 @@ export interface Child {
 export interface User {
   id: string;
   name: string;
+  code?: string;
   email: string;
   role: Role;
   avatar?: string;

@@ -1,43 +1,43 @@
 import { useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, ScrollView, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Eye, EyeOff, ArrowRight, GraduationCap, ClipboardList, Users, Mail, Lock } from 'lucide-react-native';
+import { Eye, EyeOff, ArrowRight, GraduationCap, ClipboardList, Users, Hash, Lock } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useAuth } from '@/store/useAuth';
 import { Button } from '@/components/ui/Button';
 
-const DEMO_ACCOUNTS: { label: string; email: string; icon: LucideIcon }[] = [
-  { label: 'Auxiliar', email: 'auxiliar@colegio.edu', icon: ClipboardList },
-  { label: 'Padre', email: 'padre@colegio.edu', icon: Users },
-  { label: 'Alumno', email: 'alumno@colegio.edu', icon: GraduationCap },
+const DEMO_ACCOUNTS: { label: string; code: string; icon: LucideIcon }[] = [
+  { label: 'Auxiliar', code: 't10000001', icon: ClipboardList },
+  { label: 'Padre', code: 'p10000001', icon: Users },
+  { label: 'Alumno', code: 'e10000001', icon: GraduationCap },
 ];
 
 export function LoginScreen() {
   const { theme } = useTheme();
   const { login, isLoading } = useAuth();
-  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    if (!code || !password) {
       setError('Completá todos los campos.');
       return;
     }
     setError('');
     try {
-      await login(email, password);
+      await login(code, password);
     } catch {
-      setError('Correo o contraseña incorrectos.');
+      setError('Código o contraseña incorrectos.');
     }
   };
 
-  const handleDemoLogin = async (demoEmail: string) => {
+  const handleDemoLogin = async (demoCode: string) => {
     setError('');
     try {
-      await login(demoEmail, 'demo123');
+      await login(demoCode, 'demo123');
     } catch {
       setError('No se pudo iniciar sesión.');
     }
@@ -121,18 +121,17 @@ export function LoginScreen() {
         <View style={{ gap: 16 }}>
           <View>
             <Text style={{ fontFamily: theme.typography.fontFamilyBold, fontSize: 14, color: theme.colors.foreground, marginBottom: 6 }}>
-              Correo electrónico
+              Código de usuario
             </Text>
             <View style={{ position: 'relative' }}>
               <View style={{ position: 'absolute', left: 16, top: 16, zIndex: 1 }}>
-                <Mail size={16} color={theme.colors.mutedForeground} strokeWidth={1.8} />
+                <Hash size={16} color={theme.colors.mutedForeground} strokeWidth={1.8} />
               </View>
               <TextInput
-                value={email}
-                onChangeText={v => { setEmail(v); setError(''); }}
-                placeholder="correo@colegio.edu"
+                value={code}
+                onChangeText={v => { setCode(v); setError(''); }}
+                placeholder="t10000001"
                 placeholderTextColor={theme.colors.mutedForeground}
-                keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
                 style={{
@@ -223,8 +222,8 @@ export function LoginScreen() {
             const Icon = acc.icon;
             return (
               <Pressable
-                key={acc.email}
-                onPress={() => void handleDemoLogin(acc.email)}
+                key={acc.code}
+                onPress={() => void handleDemoLogin(acc.code)}
                 disabled={isLoading}
                 style={({ pressed }) => ({
                   flex: 1,

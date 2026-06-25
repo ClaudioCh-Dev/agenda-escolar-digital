@@ -142,18 +142,22 @@ Las mutations invalidan solo su dominio (`queryKeys.entries`, etc.), no recargan
 ### 1. Cliente HTTP
 
 ```
-src/services/api/client.ts
+src/services/api/
+├── client.ts       # apiFetch, envelope, Bearer, refresh 401
+├── tokenStore.ts   # access/refresh tokens en AsyncStorage
+├── mappers.ts      # DTOs API → tipos móvil
+└── types.ts        # tipos de respuesta del backend
 ```
 
-- `apiFetch(path, options)` → `fetch` a `API_BASE_URL + path`
-- `ApiError` para respuestas fallidas
-- `notImplemented()` — lo que usan los stubs hoy
+- `apiFetch(path, options)` → parsea `{ success, data, error }` del backend Nest
+- `ApiError` con mensaje del servidor
+- JWT en header `Authorization`; en 401 intenta `POST /auth/refresh` una vez
 
-### 2. Stubs de endpoints (implementar acá)
+### 2. Implementación de endpoints
 
 ```
 src/services/api/
-├── auth.api.ts           # POST /auth/login, GET /auth/session, …
+├── auth.api.ts           # POST /auth/login (code+password), GET /users/me
 ├── entries.api.ts        # GET/POST/PATCH/DELETE /entries, POST …/read
 ├── calendar.api.ts       # /calendar/events
 ├── notifications.api.ts
@@ -161,17 +165,19 @@ src/services/api/
 └── students.api.ts
 ```
 
-**Estado actual:** casi todo llama a `notImplemented('GET /entries')` etc. Hay que reemplazar cada función con un `apiFetch` real.
+**Estado actual:** implementados con `apiFetch` + mappers. Activar con `EXPO_PUBLIC_USE_MOCK=false`.
 
-Ejemplo objetivo:
+Ejemplo:
 
 ```ts
-// entries.api.ts (cuando conectes backend)
+// entries.api.ts
 export async function listEntries(params?: ListEntriesParams): Promise<Entry[]> {
-  const qs = new URLSearchParams(params as Record<string, string>).toString();
-  return apiFetch<Entry[]>(`/entries?${qs}`);
+  const data = await apiFetch<EntryResponseDto[]>(`/entries${buildQuery(params)}`);
+  return data.map(mapEntry);
 }
 ```
+
+Login usa **código** (`t10000001`), no email. La sesión se restaura con `GET /users/me` y tokens en `tokenStore`.
 
 ### 3. Misma factory
 
@@ -218,11 +224,11 @@ Los hooks de Query **no cambian**: siguen llamando `listEntries()` etc. desde la
 
 ## Cómo pasar de mock a API (checklist)
 
-1. Implementar funciones en `src/services/api/*.api.ts` con `apiFetch`.
-2. Poner `EXPO_PUBLIC_API_URL` y `EXPO_PUBLIC_USE_MOCK=false` en `.env`.
-3. Probar login → `authStore` debe recibir `User` del backend.
-4. Verificar que `useEntries()`, `useCalendarEvents()`, etc. cargan datos.
-5. Opcional: mantener mock para desarrollo offline con `USE_MOCK=true`.
+1. Backend: `pnpm db:migrate` + `database/seed-dev.sql` en `api/`
+2. `mobil/.env`: `EXPO_PUBLIC_USE_MOCK=false` y `EXPO_PUBLIC_API_URL`
+3. Login con código seed (`t10000001` / `demo123`) → `authStore` recibe `User` mapeado
+4. Verificar `useEntries()`, `useCalendarEvents()`, notificaciones y chat
+5. Opcional: mock offline con `USE_MOCK=true`
 
 ---
 

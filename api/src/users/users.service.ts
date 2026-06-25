@@ -1,7 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  PayloadTooLargeException,
+  UnsupportedMediaTypeException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { In, IsNull, Repository } from 'typeorm';
+import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
+import {
+  getProfileFolder,
+  isProfilePublicIdInSchoolScope,
+} from '../cloudinary/cloudinary-paths';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { RoleEntity } from '../iam/entities/role.entity';
 import { UserRoleEntity } from '../iam/entities/user-role.entity';
 import {
@@ -10,6 +21,7 @@ import {
 } from '../shared/access/access.utils';
 import { NotFoundException } from '../shared/exception/not-found.exception';
 import { UserNotFoundException } from '../shared/exception/user-not-found.exception';
+import { domainLog } from '../shared/logging';
 import type { UserType } from '../shared/database/enums';
 import {
   CreateUserDto,
@@ -24,9 +36,12 @@ import { UserEntity } from './entities/user.entity';
 
 const ROLE_PRIORITY = ['direccion', 'auxiliar', 'profesor', 'padre', 'alumno'];
 const BCRYPT_ROUNDS = 10;
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(UserEntity)
     private readonly usersRepository: Repository<UserEntity>,
@@ -40,6 +55,7 @@ export class UsersService {
     private readonly studentsRepository: Repository<StudentEntity>,
     @InjectRepository(ParentStudentEntity)
     private readonly parentStudentsRepository: Repository<ParentStudentEntity>,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async findByCode(code: string): Promise<UserEntity | null> {
@@ -84,6 +100,73 @@ export class UsersService {
     }
 
     return this.toProfileDto(user);
+  }
+
+  async updateOwnAvatar(
+    auth: AuthenticatedUser,
+    file: Express.Multer.File,
+  ): Promise<UserProfileDto> {
+    this.validateAvatarFile(file);
+
+    const user = await this.usersRepository.findOne({
+      where: { id: auth.userId, schoolId: auth.schoolId, isActive: true },
+    });
+
+    if (!user) {
+      throw new UserNotFoundException(auth.userId);
+    }
+
+    const upload = await this.cloudinaryService.uploadBuffer(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+      getProfileFolder(this.cloudinaryService.getRootFolder(), auth.schoolId),
+      {
+        transformation: [{ width: 512, height: 512, crop: 'fill' }],
+      },
+    );
+
+    await this.removeAvatarFromCloudinary(user);
+
+    user.avatarUrl = upload.storageUrl;
+    user.avatarCloudinaryPublicId = upload.publicId;
+    await this.usersRepository.save(user);
+
+    this.logger.log(
+      domainLog({
+        action: 'users.avatar.update',
+        userId: auth.userId,
+        module: 'users',
+      }),
+    );
+
+    return this.findProfileById(auth.userId);
+  }
+
+  async removeOwnAvatar(auth: AuthenticatedUser): Promise<UserProfileDto> {
+    const user = await this.usersRepository.findOne({
+      where: { id: auth.userId, schoolId: auth.schoolId, isActive: true },
+    });
+
+    if (!user) {
+      throw new UserNotFoundException(auth.userId);
+    }
+
+    await this.removeAvatarFromCloudinary(user);
+
+    user.avatarUrl = null;
+    user.avatarCloudinaryPublicId = null;
+    await this.usersRepository.save(user);
+
+    this.logger.log(
+      domainLog({
+        action: 'users.avatar.remove',
+        userId: auth.userId,
+        module: 'users',
+      }),
+    );
+
+    return this.findProfileById(auth.userId);
   }
 
   async updatePasswordHash(
@@ -319,5 +402,52 @@ export class UsersService {
 
   private buildInitials(name: string): string {
     return buildInitials(name);
+  }
+
+  private validateAvatarFile(file: Express.Multer.File): void {
+    if (!file?.buffer?.length) {
+      throw new UnsupportedMediaTypeException('File is required');
+    }
+
+    if (file.size > MAX_AVATAR_BYTES) {
+      throw new PayloadTooLargeException('Avatar exceeds 5 MB limit');
+    }
+
+    if (!file.mimetype.startsWith('image/')) {
+      throw new UnsupportedMediaTypeException('Only image files are allowed');
+    }
+  }
+
+  private async removeAvatarFromCloudinary(user: UserEntity): Promise<void> {
+    if (
+      !user.avatarCloudinaryPublicId ||
+      !this.cloudinaryService.isConfigured()
+    ) {
+      return;
+    }
+
+    if (
+      !isProfilePublicIdInSchoolScope(
+        user.avatarCloudinaryPublicId,
+        this.cloudinaryService.getRootFolder(),
+        user.schoolId,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await this.cloudinaryService.deleteByPublicId(
+        user.avatarCloudinaryPublicId,
+      );
+    } catch {
+      this.logger.warn(
+        domainLog({
+          action: 'users.avatar.delete.cloudinary_failed',
+          userId: user.id,
+          module: 'users',
+        }),
+      );
+    }
   }
 }

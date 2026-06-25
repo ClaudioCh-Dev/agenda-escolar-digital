@@ -9,6 +9,7 @@ import { CALENDAR_LINKED_ENTRY_TYPES } from '../shared/access/access.utils';
 import { EntryVisibilityService } from '../shared/access/entry-visibility.service';
 import { SectionScopeService } from '../shared/access/section-scope.service';
 import type { ScopedUserContext } from '../shared/access/scoped-user-context.interface';
+import { canModifyEntry } from '../shared/access/entry-modify.util';
 import { UserScopeService } from '../shared/access/user-scope.service';
 import type { CalendarEventType } from '../shared/database/enums';
 import { ForbiddenException } from '../shared/exception/forbidden.exception';
@@ -345,21 +346,7 @@ export class EntriesService {
     context: ScopedUserContext,
     userId: string,
   ): boolean {
-    if (entry.authorId === userId) {
-      return true;
-    }
-
-    if (
-      context.primaryRole === 'auxiliar' ||
-      context.primaryRole === 'direccion'
-    ) {
-      return (
-        context.sectionIds.includes(entry.sectionId) ||
-        context.primaryRole === 'direccion'
-      );
-    }
-
-    return false;
+    return canModifyEntry(entry, context, userId);
   }
 
   private async findEntryOrThrow(

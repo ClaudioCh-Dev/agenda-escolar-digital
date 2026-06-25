@@ -6,6 +6,10 @@ import {
   updateEvent,
   deleteEvent,
 } from '@/services/calendar.service';
+import {
+  uploadAttachmentToCalendarEvent,
+  type PickedAttachmentFile,
+} from '@/services/api/attachments.api';
 import { queryKeys } from './keys';
 import { useAuthStore } from '@/store/authStore';
 
@@ -47,6 +51,24 @@ export function useDeleteCalendarEvent() {
 
   return useMutation({
     mutationFn: (id: string) => deleteEvent(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.calendar });
+    },
+  });
+}
+
+export function useUploadCalendarEventAttachment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: {
+      eventId: string;
+      file: PickedAttachmentFile;
+      onProgress?: (percent: number) => void;
+    }) =>
+      uploadAttachmentToCalendarEvent(params.eventId, params.file, {
+        onProgress: params.onProgress,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.calendar });
     },

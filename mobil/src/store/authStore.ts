@@ -11,10 +11,11 @@ interface AuthState {
   selectedChild: Child | null;
   isLoading: boolean;
   isHydrated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (code: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   setSelectedSection: (section: string) => void;
   setSelectedChild: (child: Child | null) => void;
+  updateUser: (partial: Partial<User>) => void;
   restoreSession: () => Promise<void>;
   setHydrated: () => void;
 }
@@ -36,10 +37,10 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
       isHydrated: false,
 
-      login: async (email, password) => {
+      login: async (code, password) => {
         set({ isLoading: true });
         try {
-          const loggedUser = await authLogin({ email, password });
+          const loggedUser = await authLogin({ code, password });
           set({ ...applyUserDefaults(loggedUser), isLoading: false });
         } catch (error) {
           set({ isLoading: false });
@@ -56,6 +57,12 @@ export const useAuthStore = create<AuthState>()(
       setSelectedSection: (section) => set({ selectedSection: section }),
 
       setSelectedChild: (child) => set({ selectedChild: child }),
+
+      updateUser: (partial) => {
+        const current = get().user;
+        if (!current) return;
+        set({ user: { ...current, ...partial } });
+      },
 
       restoreSession: async () => {
         const { user: persistedUser } = get();

@@ -1,7 +1,7 @@
 -- Agenda Escolar Digital — triggers y funciones
 -- Ejecutar después de 02-tables.sql (antes o después de 03-views.sql)
 --
--- Política documentada en database/relaciones.md § «Borrado entry ↔ calendar_event»
+-- Política documentada en database/docs/relaciones.md § «Borrado entry ↔ calendar_event»
 
 -- ---------------------------------------------------------------------------
 -- calendar_events: borrar evento NO borra la entry vinculada

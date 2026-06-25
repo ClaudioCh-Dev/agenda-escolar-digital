@@ -10,6 +10,7 @@ export function toAttachmentResponse(
     size: attachment.sizeLabel,
     fileType: attachment.fileType,
     url: attachment.storageUrl,
+    publicId: attachment.cloudinaryPublicId ?? undefined,
   };
 }
 

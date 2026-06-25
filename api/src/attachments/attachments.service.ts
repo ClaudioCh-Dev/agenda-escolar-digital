@@ -8,8 +8,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import {
+  getDocumentFolder,
+  isDocumentPublicIdInSchoolScope,
+} from '../cloudinary/cloudinary-paths';
 import { EntryEntity } from '../entries/entities/entry.entity';
 import { CalendarEventEntity } from '../calendar/entities/calendar-event.entity';
+import {
+  canModifyCalendarEvent,
+  canModifyEntry,
+} from '../shared/access/entry-modify.util';
+import { UserScopeService } from '../shared/access/user-scope.service';
 import { ForbiddenException } from '../shared/exception/forbidden.exception';
 import { NotFoundException } from '../shared/exception/not-found.exception';
 import { domainLog } from '../shared/logging';
@@ -49,6 +58,7 @@ export class AttachmentsService {
     @InjectRepository(CalendarEventEntity)
     private readonly calendarEventsRepository: Repository<CalendarEventEntity>,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly userScopeService: UserScopeService,
   ) {}
 
   async uploadFile(
@@ -61,7 +71,7 @@ export class AttachmentsService {
       file.buffer,
       file.originalname,
       file.mimetype,
-      auth.schoolId,
+      getDocumentFolder(this.cloudinaryService.getRootFolder(), auth.schoolId),
     );
 
     const fileType = resolveAttachmentFileType(
@@ -173,7 +183,7 @@ export class AttachmentsService {
     file: Express.Multer.File,
   ): Promise<AttachmentResponseDto> {
     const entry = await this.findEntryInSchool(entryId, auth.schoolId);
-    this.assertCanModifyEntry(entry, auth.userId);
+    await this.assertCanModifyEntry(entry, auth.userId);
 
     const uploaded = await this.uploadFile(auth, file);
     const calendarEvent = await this.calendarEventsRepository.findOne({
@@ -204,7 +214,7 @@ export class AttachmentsService {
       calendarEventId,
       auth.schoolId,
     );
-    this.assertCanModifyCalendarEvent(event, auth.userId);
+    await this.assertCanModifyCalendarEvent(event, auth.userId);
 
     const uploaded = await this.uploadFile(auth, file);
 
@@ -221,6 +231,25 @@ export class AttachmentsService {
     );
 
     return toAttachmentResponse(saved);
+  }
+
+  async cancelStagingUpload(
+    auth: AuthenticatedUser,
+    publicId: string,
+  ): Promise<void> {
+    this.assertPublicIdInSchoolScope(publicId, auth.schoolId);
+
+    if (this.cloudinaryService.isConfigured()) {
+      await this.cloudinaryService.deleteByPublicId(publicId);
+    }
+
+    this.logger.log(
+      domainLog({
+        action: 'attachments.staging.cancel',
+        userId: auth.userId,
+        module: 'attachments',
+      }),
+    );
   }
 
   async deleteAttachment(auth: AuthenticatedUser, id: string): Promise<void> {
@@ -241,9 +270,12 @@ export class AttachmentsService {
     }
 
     if (attachment.entry) {
-      this.assertCanModifyEntry(attachment.entry, auth.userId);
+      await this.assertCanModifyEntry(attachment.entry, auth.userId);
     } else if (attachment.calendarEvent) {
-      this.assertCanModifyCalendarEvent(attachment.calendarEvent, auth.userId);
+      await this.assertCanModifyCalendarEvent(
+        attachment.calendarEvent,
+        auth.userId,
+      );
     }
 
     await this.removeFromCloudinary(attachment);
@@ -345,22 +377,36 @@ export class AttachmentsService {
     return event;
   }
 
-  private assertCanModifyEntry(entry: EntryEntity, userId: string): void {
-    if (entry.authorId === userId) {
-      return;
-    }
+  private async assertCanModifyEntry(
+    entry: EntryEntity,
+    userId: string,
+  ): Promise<void> {
+    const context = await this.userScopeService.loadContext(userId);
 
-    throw new ForbiddenException();
+    if (!canModifyEntry(entry, context, userId)) {
+      throw new ForbiddenException();
+    }
   }
 
-  private assertCanModifyCalendarEvent(
+  private async assertCanModifyCalendarEvent(
     event: CalendarEventEntity,
     userId: string,
-  ): void {
-    if (event.authorId === userId) {
-      return;
-    }
+  ): Promise<void> {
+    const context = await this.userScopeService.loadContext(userId);
 
-    throw new ForbiddenException();
+    if (!canModifyCalendarEvent(event, context, userId)) {
+      throw new ForbiddenException();
+    }
+  }
+
+  private assertPublicIdInSchoolScope(
+    publicId: string,
+    schoolId: string,
+  ): void {
+    const rootFolder = this.cloudinaryService.getRootFolder();
+
+    if (!isDocumentPublicIdInSchoolScope(publicId, rootFolder, schoolId)) {
+      throw new ForbiddenException();
+    }
   }
 }

@@ -51,16 +51,36 @@ Variables opcionales (copiá `.env.example` → `.env`):
 
 ## Cuentas demo
 
-Contraseña: **cualquier valor** (el mock no la valida).
+### Modo mock (`EXPO_PUBLIC_USE_MOCK=true`, default)
 
-| Rol | Email | Notas |
-|-----|-------|-------|
-| Auxiliar | `auxiliar@colegio.edu` | María García · secciones 3° A y 5° A/B/C |
-| Padre | `padre@colegio.edu` | Carlos Rodríguez · hijos Lucas (3° A) y Emma (5° B) · **2 lecturas pendientes** |
-| Padre (extra) | `padre2@colegio.edu` | Ana López · Sofía y Mateo |
-| Alumno | `alumno@colegio.edu` | Lucas Rodríguez · 3° A |
+Contraseña: **cualquier valor** (el mock no la valida). Podés usar código o email legacy:
 
-Para probar listas largas de padres: comunicado `e-002` (30 familias en 3° A, 10 ya confirmaron).
+| Rol | Código | Email (legacy) |
+|-----|--------|----------------|
+| Auxiliar | `t10000001` | `auxiliar@colegio.edu` |
+| Padre | `p10000001` | `padre@colegio.edu` |
+| Alumno | `e10000001` | `alumno@colegio.edu` |
+
+En mock también existen padre extra (`padre2@colegio.edu`) y más datos de demo en `src/data/mocks/`.
+
+### Modo API (`EXPO_PUBLIC_USE_MOCK=false`)
+
+Requiere el backend Nest en `api/` con migraciones y seed:
+
+```bash
+cd api
+pnpm db:migrate
+psql $DATABASE_URL -f database/seed-dev.sql
+pnpm start:dev
+```
+
+| Rol | Código | Contraseña |
+|-----|--------|------------|
+| Auxiliar | `t10000001` | `demo123` |
+| Padre | `p10000001` | `demo123` |
+| Alumno | `e10000001` | `demo123` |
+
+Copiá `.env.example` → `.env` en `mobil/` y ajustá `EXPO_PUBLIC_API_URL` (ver comentarios en el archivo).
 
 ---
 
@@ -140,7 +160,7 @@ src/
   constants/            # Config, labels, tipos de anotación
   data/mocks/           # Datos estáticos
   services/
-    api/                # Stubs HTTP (implementar para prod)
+    api/                # Cliente HTTP, mappers, tokenStore
     mocks/              # Store en memoria (dev)
     *.service.ts        # Facades con firma única mock/API
   store/                # Zustand (auth + persist)
@@ -175,18 +195,30 @@ Por defecto `USE_MOCK = true` en `src/constants/config.ts`.
 
 Para API real:
 
-1. Implementar funciones en `src/services/api/*.api.ts`
-2. Definir `EXPO_PUBLIC_API_URL` en `.env`
-3. Poner `EXPO_PUBLIC_USE_MOCK=false`
+1. Levantá el backend (`api/`) con seed de desarrollo
+2. Copiá `mobil/.env.example` → `mobil/.env`
+3. `EXPO_PUBLIC_USE_MOCK=false` y `EXPO_PUBLIC_API_URL` apuntando al servidor (ej. `http://10.0.2.2:3000` en emulador Android)
+4. Login con **código** + contraseña (`t10000001` / `demo123`)
 
-| Servicio | Funciones stub | Endpoint |
-|----------|----------------|----------|
-| auth | login, logout, getSession, changePassword | `/auth/*` |
-| entries | CRUD + confirmEntryRead | `/entries` |
-| calendar | CRUD eventos | `/calendar/events` |
-| notifications | list, markAsRead | `/notifications` |
-| chat | conversaciones y mensajes | `/conversations` |
-| students | alumnos y padres por sección | `/students`, `/parents` |
+La capa HTTP está en `src/services/api/`:
+
+| Archivo | Rol |
+|---------|-----|
+| `client.ts` | Envelope `{ success, data, error }`, JWT Bearer, refresh en 401 |
+| `tokenStore.ts` | Persistencia de access/refresh tokens |
+| `mappers.ts` | DTOs API → tipos móvil |
+| `*.api.ts` | Endpoints por dominio |
+
+| Servicio | Endpoints |
+|----------|-----------|
+| auth | `POST /auth/login`, `POST /auth/logout`, `PATCH /auth/password`, sesión vía `GET /users/me` |
+| entries | CRUD + `POST /entries/:id/read` |
+| calendar | CRUD `/calendar/events` |
+| notifications | `/notifications`, unread-count, marcar leídas |
+| chat | `/conversations` |
+| students | `/students`, `/parents`, `/users/me` |
+
+**Fase 2:** subida de adjuntos (Cloudinary) — la UI puede mostrar nombres locales pero no se envían al backend.
 
 ---
 

@@ -108,10 +108,22 @@ export class StudentsService {
 
     const uniqueParents = new Map<string, ParentResponseDto>();
     for (const link of links) {
-      uniqueParents.set(link.parentId, this.toParentDto(link.parent));
+      const child = this.toChildSummary(link.student);
+      const existing = uniqueParents.get(link.parentId);
+      if (existing) {
+        const children = existing.children ?? [];
+        if (!children.some((c) => c.id === child.id)) {
+          existing.children = [...children, child];
+        }
+      } else {
+        uniqueParents.set(link.parentId, {
+          ...this.toParentDto(link.parent),
+          children: [child],
+        });
+      }
     }
 
-    return [...uniqueParents.values()];
+    return Array.from(uniqueParents.values());
   }
 
   private async listParentsForStudent(
@@ -122,12 +134,16 @@ export class StudentsService {
       where: { studentId },
       relations: {
         parent: { userRoles: { role: true }, userSections: { section: true } },
+        student: { user: true, section: true },
       },
     });
 
     return links
       .filter((link) => link.parent.schoolId === schoolId)
-      .map((link) => this.toParentDto(link.parent));
+      .map((link) => ({
+        ...this.toParentDto(link.parent),
+        children: [this.toChildSummary(link.student)],
+      }));
   }
 
   private toChildDto(student: StudentEntity): ChildResponseDto {
@@ -138,6 +154,17 @@ export class StudentsService {
       grade: student.section.grade ?? '',
       initials: buildInitials(student.user.name),
       color: DEFAULT_CHILD_COLOR,
+      avatar: student.user.avatarUrl ?? undefined,
+    };
+  }
+
+  private toChildSummary(student: StudentEntity) {
+    return {
+      id: student.id,
+      name: student.user.name,
+      section: student.section.name,
+      grade: student.section.grade ?? '',
+      initials: buildInitials(student.user.name),
       avatar: student.user.avatarUrl ?? undefined,
     };
   }

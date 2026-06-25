@@ -17,6 +17,7 @@ import { HomeTopBar } from '@/components/layout/HomeTopBar';
 import { SummaryCardDecor } from '@/components/ui/SummaryCardDecor';
 import { EntryCard } from '@/components/features/EntryCard';
 import { EntryDetailModal } from '@/components/features/EntryDetailModal';
+import { UserAvatar } from '@/components/features/UserAvatar';
 import { PendingAckBanner } from '@/components/features/PendingAckBanner';
 import { PendingAckGuideModal } from '@/components/features/PendingAckGuideModal';
 
@@ -110,29 +111,16 @@ export function ParentDashboard() {
                     {formatFullDate(TODAY, true)}
                   </Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 }}>
-                    {userAvatar ? (
-                      <Image
-                        source={userAvatar}
-                        style={{ width: 64, height: 64, borderRadius: 16, borderWidth: 2, borderColor: theme.colors.border }}
+                    <View style={{ borderWidth: 2, borderColor: theme.colors.border, borderRadius: 16 }}>
+                      <UserAvatar
+                        name={user.name}
+                        initials={user.initials}
+                        avatar={user.avatar}
+                        fallbackSource={userAvatar}
+                        size={64}
+                        borderRadius={14}
                       />
-                    ) : (
-                      <View
-                        style={{
-                          width: 64,
-                          height: 64,
-                          borderRadius: 16,
-                          backgroundColor: theme.colors.primary,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderWidth: 2,
-                          borderColor: theme.colors.border,
-                        }}
-                      >
-                        <Text style={{ fontFamily: theme.typography.fontFamilyBlack, fontSize: 18, color: '#fff' }}>
-                          {user.initials}
-                        </Text>
-                      </View>
-                    )}
+                    </View>
                     <View style={{ flex: 1, minWidth: 0, paddingHorizontal: 4 }}>
                       <Text style={{ fontFamily: theme.typography.fontFamilyBlack, fontSize: 34, color: theme.colors.foreground, letterSpacing: -1, lineHeight: 36 }}>
                         {user.name.split(' ')[0]}

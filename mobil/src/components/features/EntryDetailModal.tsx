@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView, Linking, Alert } from 'react-native';
 
 import {
 
-  X, Check, AlertCircle, Paperclip, Download, Image as ImageIcon, Pencil, Trash2, ChevronRight,
+  X, Check, AlertCircle, Paperclip, Download, Image as ImageIcon, Pencil, Trash2, ChevronRight, Plus,
 
   BookOpen, Megaphone, Package, Eye, Bell, FileText, Star, User,
 
@@ -24,7 +24,7 @@ import { entryRequiresAck, getAckStats, getParentAckList, isPendingAck } from '@
 import { formatModalDate } from '@/utils/dates';
 import { TodayDateText } from '@/components/ui/TodayDateText';
 import { EntryAuthorLabel } from '@/components/features/EntryAuthorLabel';
-import { TODAY } from '@/constants/config';
+import { TODAY, USE_MOCK } from '@/constants/config';
 
 import { useTheme, mutedOutlineButtonStyle, cardShadow } from '@/theme';
 
@@ -35,7 +35,10 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Button } from '@/components/ui/Button';
 
 import { ParentAckListModal } from '@/components/features/ParentAckListModal';
+import { AttachmentSourceModal } from '@/components/features/AttachmentSourceModal';
 import { useParentsBySection, useStudentsBySection } from '@/queries/useStudents';
+import { useUploadEntryAttachment } from '@/queries/useEntries';
+import type { PickedAttachmentFile } from '@/services/api/attachments.api';
 
 const ICONS: Record<EntryType, LucideIcon> = {
 
@@ -111,6 +114,9 @@ export function EntryDetailModal({
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAckList, setShowAckList] = useState(false);
+  const [showAttachmentSource, setShowAttachmentSource] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const uploadAttachment = useUploadEntryAttachment();
 
   const section = entry?.section ?? '';
   const { data: ackParents = [] } = useParentsBySection(section);
@@ -165,6 +171,25 @@ export function EntryDetailModal({
 
     onClose();
 
+  };
+
+  const isUploadingAttachment = uploadAttachment.isPending;
+
+  const handleAttachmentPicked = async (file: PickedAttachmentFile) => {
+    setUploadProgress(0);
+
+    try {
+      await uploadAttachment.mutateAsync({
+        entryId: entry.id,
+        file,
+        onProgress: setUploadProgress,
+      });
+      setShowAttachmentSource(false);
+    } catch {
+      Alert.alert('Error', 'No se pudo subir el archivo. Verificá el tipo y que no supere 10 MB.');
+    } finally {
+      setUploadProgress(0);
+    }
   };
 
 
@@ -391,16 +416,17 @@ export function EntryDetailModal({
 
 
 
-              {entry.attachments.length > 0 && (
+              {(entry.attachments.length > 0 || (canManage && !USE_MOCK)) && (
 
                 <View style={{ marginTop: 16, gap: 8 }}>
 
                   {entry.attachments.map((att, i) => (
-
-                    <View
-
-                      key={i}
-
+                    <Pressable
+                      key={att.id ?? i}
+                      onPress={() => {
+                        if (att.url) void Linking.openURL(att.url);
+                      }}
+                      disabled={!att.url}
                       style={{
 
                         flexDirection: 'row',
@@ -445,9 +471,49 @@ export function EntryDetailModal({
 
                       <Download size={14} color={theme.colors.mutedForeground} />
 
-                    </View>
+                    </Pressable>
 
                   ))}
+
+                  {canManage && !USE_MOCK && (
+                    <Pressable
+                      onPress={() => setShowAttachmentSource(true)}
+                      disabled={isUploadingAttachment}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        paddingVertical: 10,
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        borderColor: theme.colors.border,
+                        opacity: isUploadingAttachment ? 0.5 : 1,
+                      }}
+                    >
+                      <Plus size={14} color={theme.colors.primary} />
+                      <Text style={{ fontFamily: theme.typography.fontFamilyBold, fontSize: 13, color: theme.colors.primary }}>
+                        Agregar adjunto
+                      </Text>
+                    </Pressable>
+                  )}
+
+                  {isUploadingAttachment && (
+                    <View style={{ gap: 6, paddingHorizontal: 4 }}>
+                      <Text style={{ fontFamily: theme.typography.fontFamilyMedium, fontSize: 12, color: theme.colors.mutedForeground }}>
+                        Subiendo… {uploadProgress}%
+                      </Text>
+                      <View style={{ height: 4, borderRadius: 2, backgroundColor: theme.colors.border, overflow: 'hidden' }}>
+                        <View
+                          style={{
+                            height: '100%',
+                            width: `${uploadProgress}%`,
+                            backgroundColor: theme.colors.primary,
+                          }}
+                        />
+                      </View>
+                    </View>
+                  )}
 
                 </View>
 
@@ -753,6 +819,14 @@ export function EntryDetailModal({
 
         parents={parentAckList}
 
+      />
+
+      <AttachmentSourceModal
+        visible={showAttachmentSource}
+        onClose={() => setShowAttachmentSource(false)}
+        onPicked={file => void handleAttachmentPicked(file)}
+        uploading={isUploadingAttachment}
+        uploadProgress={uploadProgress}
       />
 
     </>

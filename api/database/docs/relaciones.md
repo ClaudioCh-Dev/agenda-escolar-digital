@@ -1,6 +1,6 @@
 # Relaciones del modelo de datos
 
-Esquema derivado de los tipos TypeScript (`src/types/`), los mocks (`src/data/mocks/`) y las pantallas móviles de Expo Router. Migraciones Flyway en [`database/migrations/`](./migrations/).
+Esquema derivado de los tipos TypeScript (`src/types/`), los mocks (`src/data/mocks/`) y las pantallas móviles de Expo Router. Migraciones en [`../migrations/`](../migrations/).
 
 ---
 
@@ -92,7 +92,7 @@ erDiagram
 | Sin `users.role` (enum) | `permissions` + `roles` + `user_roles` | RBAC escalable; nuevos permisos sin migrar columnas |
 | `schools → sections` | `schools → sedes → sections` | Un colegio con varias sedes; sección pertenece a sede |
 | `username` por colegio | `users.code` único (`e/t/p…`) | Login tipo universidad; sin `schoolSlug` |
-| `calendar_events.entry_id` opcional | Vínculo con `entries` | Política asimétrica: borrar **entry** elimina el evento; borrar **evento** conserva la entry (`database/migrations/R__triggers.sql`) |
+| `calendar_events.entry_id` opcional | Vínculo con `entries` | Política asimétrica: borrar **entry** elimina el evento; borrar **evento** conserva la entry (`../migrations/R__triggers.sql`) |
 | `notifications` solo con `entry_id` | También `calendar_event_id` | Avisos de calendario |
 
 ---
@@ -167,7 +167,7 @@ flowchart TD
   end
 ```
 
-**Implementación:** `database/migrations/R__triggers.sql` — no duplicar esta lógica solo en la app Nest; la BD es la fuente de verdad.
+**Implementación:** `../migrations/R__triggers.sql` — no duplicar esta lógica solo en la app Nest; la BD es la fuente de verdad.
 
 **App (Nest):** `DELETE /calendar/events/:id` debe ser un borrado simple del evento; no intentar borrar la entry. Si la UX pide “quitar de calendario pero dejar en agenda”, es el caso por defecto.
 
@@ -175,7 +175,7 @@ flowchart TD
 
 ## Actualización entry ↔ calendar_event
 
-Si `calendar_events.entry_id` apunta a una entry, **ambos registros se mantienen alineados** al editar cualquiera de los dos (triggers AFTER UPDATE en `database/migrations/R__triggers.sql`).
+Si `calendar_events.entry_id` apunta a una entry, **ambos registros se mantienen alineados** al editar cualquiera de los dos (triggers AFTER UPDATE en `../migrations/R__triggers.sql`).
 
 | Campo entry | Campo calendar_event | Notas |
 |-------------|----------------------|-------|
@@ -313,7 +313,7 @@ calendar_events 1 ── * attachments
 - Si el auxiliar crea un evento desde **Nueva anotación → Calendario**, guardá `entry_id`.
 - Al **eliminar la entry**, el evento de calendario asociado se borra solo (cascada).
 - Al **eliminar el evento**, la entry en agenda **permanece** (trigger en `R__triggers.sql`).
-- Si están vinculados (`entry_id`), **editar uno actualiza el otro** (triggers AFTER UPDATE en `database/migrations/R__triggers.sql`).
+- Si están vinculados (`entry_id`), **editar uno actualiza el otro** (triggers AFTER UPDATE en `../migrations/R__triggers.sql`).
 - Eventos institucionales sin entry dejan `entry_id = NULL`.
 
 ### Horarios de clase (futuro)

@@ -3,6 +3,10 @@
 /node_modules
 /build
 
+# Accidental tsc output next to sources (must only live in /dist)
+/src/**/*.js
+/src/**/*.js.map
+
 # Logs
 logs
 *.log
