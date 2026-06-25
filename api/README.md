@@ -87,6 +87,21 @@ pnpm lint           # ESLint
 pnpm test           # tests unitarios
 ```
 
+## Documentación de la API (solo desarrollo)
+
+Con `NODE_ENV=development` (valor por defecto en `.env.example`), la API expone documentación interactiva generada desde OpenAPI:
+
+| URL | Descripción |
+|-----|-------------|
+| [http://localhost:3000/api](http://localhost:3000/api) | UI **Scalar** — explorar y probar endpoints |
+| [http://localhost:3000/api/openapi.json](http://localhost:3000/api/openapi.json) | Spec OpenAPI en JSON |
+
+Stack: `@nestjs/swagger` genera el spec; [Scalar](https://scalar.com/) renderiza la UI (tema `purple`). Los controllers están anotados con ejemplos de respuesta exitosa (`ApiSuccess`) y errores del envelope (`INVALID_REQUEST`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, etc.).
+
+**Autenticación en Scalar:** botón *Authorize* → `Bearer <accessToken>` (obtené el token con `POST /auth/login` y las cuentas demo de abajo).
+
+En **producción** (`NODE_ENV=production`) la documentación **no** se monta; solo quedan los endpoints REST.
+
 ## Documentación adicional
 
 - [Base de datos (migraciones y modelo)](database/README.md)

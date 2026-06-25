@@ -41,7 +41,7 @@ Documentación detallada por paquete:
 
 | Capa | Tecnologías |
 |------|-------------|
-| **API** | NestJS 11, TypeORM, PostgreSQL, JWT, Cloudinary, Pino |
+| **API** | NestJS 11, TypeORM, PostgreSQL, JWT, Cloudinary, Pino, Scalar (docs en dev) |
 | **Móvil** | Expo SDK 56, React Native, Expo Router, Zustand, TanStack Query |
 | **Auth** | Login por código (`t…` / `p…` / `e…`) + contraseña |
 | **Adjuntos** | Cloudinary (máx. 10 MB — imagen, PDF, Word) |
@@ -71,7 +71,7 @@ cp .env.example .env
 pnpm db:up          # Postgres en Docker (puerto 5434)
 pnpm db:migrate
 pnpm db:seed:dev    # opcional — datos demo
-pnpm start:dev      # http://localhost:3000
+pnpm start:dev      # http://localhost:3000 — docs en http://localhost:3000/api (solo dev)
 ```
 
 Completá `CLOUDINARY_*` en `.env` para adjuntos y avatares.
