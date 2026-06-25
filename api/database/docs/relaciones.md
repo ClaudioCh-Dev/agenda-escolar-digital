@@ -375,7 +375,7 @@ messages * ── 1 users (sender)
 | `(tabs)/calendario` | `calendar_events` | `GET /calendar/events` |
 | `(tabs)/perfil` | `users` | `GET /users/me` |
 | `(modals)/nueva-anotacion` | `entries`, `entry_students`, `attachments`, `calendar_events` | `POST /entries`, `POST /calendar/events` |
-| `(modals)/notificaciones` | `notifications` | `GET /notifications` |
+| `/notificaciones` | `notifications` | `GET /notifications` |
 | `(modals)/cambiar-contrasena` | `users.password_hash` | `PATCH /auth/password` |
 | Modales de detalle (Entry / Calendar) | `entries`, `calendar_events`, `attachments` | `PATCH`, `DELETE` |
 | Chat (futuro) | `conversations`, `messages` | `GET /conversations` |
