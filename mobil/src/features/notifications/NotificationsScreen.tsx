@@ -1,4 +1,5 @@
 import { View, Text, Pressable, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   BookOpen, Megaphone, Package, Eye, Bell, FileText, Star, User, Check, CheckCheck, ChevronLeft,
 } from 'lucide-react-native';
@@ -230,7 +231,7 @@ export function NotificationsScreen() {
   const olderNotifs = notifications.filter(n => !n.timestamp.startsWith(TODAY));
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top']}>
       <View
         style={{
           backgroundColor: theme.colors.card,
@@ -386,6 +387,6 @@ export function NotificationsScreen() {
           </>
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }

@@ -36,7 +36,7 @@ function RootNavigator() {
     if (!user && !inAuth) {
       router.replace('/(auth)/login');
     } else if (user && inAuth) {
-      router.replace('/(tabs)');
+      router.replace('/');
     }
   }, [user, segments, router, isHydrated]);
 
@@ -45,8 +45,7 @@ function RootNavigator() {
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="notificaciones" />
+        <Stack.Screen name="(main)" options={{ headerShown: false }} />
         <Stack.Screen name="(modals)" options={{ presentation: 'modal' }} />
       </Stack>
     </>
