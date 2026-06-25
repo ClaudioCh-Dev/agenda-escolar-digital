@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { View, Text, Pressable, ScrollView, Modal } from 'react-native';
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
+import { View, Text, Pressable, ScrollView, Modal, type LayoutChangeEvent } from 'react-native';
 import {
   ChevronLeft, ChevronRight, Plus, SlidersHorizontal, ChevronDown,
   BookOpen, Megaphone, Package, Eye, Bell, FileText, Star, User,
@@ -91,6 +91,10 @@ export function AgendaScreen() {
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const [showAckGuide, setShowAckGuide] = useState(false);
+  const dayScrollRef = useRef<ScrollView>(null);
+  const dayLayoutsRef = useRef<Map<string, { x: number; width: number }>>(new Map());
+  const [dayScrollWidth, setDayScrollWidth] = useState(0);
+  const hasScrolledInitially = useRef(false);
 
   const monthDays = useMemo(() => getMonthDays(viewYear, viewMonth), [viewYear, viewMonth]);
   const availableMonths = useMemo(
@@ -129,6 +133,37 @@ export function AgendaScreen() {
     const d = parseDate(dateStr);
     setViewYear(d.getFullYear());
     setViewMonth(d.getMonth());
+  };
+
+  const scrollToSelectedDay = useCallback(
+    (animated = true) => {
+      const layout = dayLayoutsRef.current.get(selectedDate);
+      if (!layout || !dayScrollRef.current || dayScrollWidth <= 0) {
+        return;
+      }
+      const offset = Math.max(0, layout.x - dayScrollWidth / 2 + layout.width / 2);
+      dayScrollRef.current.scrollTo({ x: offset, animated });
+    },
+    [selectedDate, dayScrollWidth],
+  );
+
+  useEffect(() => {
+    dayLayoutsRef.current.clear();
+  }, [viewYear, viewMonth]);
+
+  useEffect(() => {
+    const animated = hasScrolledInitially.current;
+    hasScrolledInitially.current = true;
+    const frame = requestAnimationFrame(() => scrollToSelectedDay(animated));
+    return () => cancelAnimationFrame(frame);
+  }, [selectedDate, monthDays, dayScrollWidth, scrollToSelectedDay]);
+
+  const handleDayLayout = (dateStr: string, event: LayoutChangeEvent) => {
+    const { x, width } = event.nativeEvent.layout;
+    dayLayoutsRef.current.set(dateStr, { x, width });
+    if (dateStr === selectedDate) {
+      requestAnimationFrame(() => scrollToSelectedDay(false));
+    }
   };
 
   const goPrev = () => {
@@ -235,10 +270,12 @@ export function AgendaScreen() {
               </Pressable>
 
               <ScrollView
+                ref={dayScrollRef}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 style={{ flex: 1 }}
                 contentContainerStyle={{ gap: 6, paddingRight: 4 }}
+                onLayout={event => setDayScrollWidth(event.nativeEvent.layout.width)}
               >
                 {monthDays.map(dateStr => {
                   const d = parseDate(dateStr);
@@ -247,6 +284,7 @@ export function AgendaScreen() {
                   return (
                     <Pressable
                       key={dateStr}
+                      onLayout={event => handleDayLayout(dateStr, event)}
                       onPress={() => {
                         setSelectedDate(dateStr);
                         syncViewMonth(dateStr);
