@@ -31,7 +31,10 @@ export class StudentsController {
 
   @Get()
   @RequirePermission('students.read')
-  @ApiOperation({ summary: 'Listar alumnos', description: 'Permiso: students.read. Filtro opcional: section' })
+  @ApiOperation({
+    summary: 'Listar alumnos',
+    description: 'Permiso: students.read. Filtro opcional: section',
+  })
   @ApiEnvelopeOk(ChildResponseDto, {
     isArray: true,
     example: [CHILD_EXAMPLE],

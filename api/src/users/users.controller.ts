@@ -54,7 +54,10 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
-  @ApiOperation({ summary: 'Perfil propio', description: 'Sesión del usuario autenticado' })
+  @ApiOperation({
+    summary: 'Perfil propio',
+    description: 'Sesión del usuario autenticado',
+  })
   @ApiEnvelopeOk(UserProfileDto, { example: USER_PROFILE_EXAMPLE })
   @ApiProtectedErrors()
   getMe(
@@ -73,7 +76,11 @@ export class UsersController {
       type: 'object',
       required: ['file'],
       properties: {
-        file: { type: 'string', format: 'binary', description: 'Imagen (máx. 5 MB)' },
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Imagen (máx. 5 MB)',
+        },
       },
     },
   })
@@ -89,7 +96,9 @@ export class UsersController {
 
   @Delete('me/avatar')
   @ApiOperation({ summary: 'Quitar avatar propio' })
-  @ApiEnvelopeOk(UserProfileDto, { example: { ...USER_PROFILE_EXAMPLE, avatar: undefined } })
+  @ApiEnvelopeOk(UserProfileDto, {
+    example: { ...USER_PROFILE_EXAMPLE, avatar: undefined },
+  })
   @ApiProtectedErrors()
   async removeAvatar(
     @CurrentUser() user: AuthenticatedUser,
@@ -99,7 +108,10 @@ export class UsersController {
 
   @Get()
   @RequirePermission('users.read')
-  @ApiOperation({ summary: 'Listar usuarios del colegio', description: 'Permiso: users.read' })
+  @ApiOperation({
+    summary: 'Listar usuarios del colegio',
+    description: 'Permiso: users.read',
+  })
   @ApiEnvelopeOk(UserAdminResponseDto, {
     isArray: true,
     example: [USER_ADMIN_EXAMPLE],
@@ -113,7 +125,10 @@ export class UsersController {
 
   @Post()
   @RequirePermission('users.manage')
-  @ApiOperation({ summary: 'Crear usuario', description: 'Permiso: users.manage' })
+  @ApiOperation({
+    summary: 'Crear usuario',
+    description: 'Permiso: users.manage',
+  })
   @ApiEnvelopeCreated(UserAdminResponseDto, { example: USER_ADMIN_EXAMPLE })
   @ApiProtectedErrors()
   async create(
@@ -128,7 +143,10 @@ export class UsersController {
   @Patch(':id')
   @RequirePermission('users.manage')
   @ApiParam({ name: 'id', example: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' })
-  @ApiOperation({ summary: 'Actualizar usuario', description: 'Permiso: users.manage' })
+  @ApiOperation({
+    summary: 'Actualizar usuario',
+    description: 'Permiso: users.manage',
+  })
   @ApiEnvelopeOk(UserAdminResponseDto, { example: USER_ADMIN_EXAMPLE })
   @ApiNotFoundError('Usuario no encontrado')
   @ApiProtectedErrors()
@@ -145,7 +163,10 @@ export class UsersController {
   @Delete(':id')
   @RequirePermission('users.manage')
   @ApiParam({ name: 'id', example: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' })
-  @ApiOperation({ summary: 'Desactivar usuario', description: 'Soft delete (isActive=false). Permiso: users.manage' })
+  @ApiOperation({
+    summary: 'Desactivar usuario',
+    description: 'Soft delete (isActive=false). Permiso: users.manage',
+  })
   @ApiEnvelopeNullOk('Usuario desactivado')
   @ApiNotFoundError('Usuario no encontrado')
   @ApiProtectedErrors()

@@ -42,7 +42,11 @@ export class EntriesController {
 
   @Get()
   @RequirePermission('entries.read')
-  @ApiOperation({ summary: 'Listar anotaciones', description: 'Permiso: entries.read. Filtros: section, date, from, to, childId' })
+  @ApiOperation({
+    summary: 'Listar anotaciones',
+    description:
+      'Permiso: entries.read. Filtros: section, date, from, to, childId',
+  })
   @ApiEnvelopeOk(EntryResponseDto, {
     isArray: true,
     example: [ENTRY_RESPONSE_EXAMPLE],
@@ -71,7 +75,10 @@ export class EntriesController {
 
   @Post()
   @RequirePermission('entries.create')
-  @ApiOperation({ summary: 'Crear anotación', description: 'Permiso: entries.create' })
+  @ApiOperation({
+    summary: 'Crear anotación',
+    description: 'Permiso: entries.create',
+  })
   @ApiEnvelopeCreated(EntryResponseDto, { example: ENTRY_RESPONSE_EXAMPLE })
   @ApiProtectedErrors()
   async create(
@@ -84,7 +91,10 @@ export class EntriesController {
   @Patch(':id')
   @RequirePermission('entries.update')
   @ApiParam({ name: 'id', example: '11111111-1111-1111-1111-111111111101' })
-  @ApiOperation({ summary: 'Actualizar anotación', description: 'Permiso: entries.update' })
+  @ApiOperation({
+    summary: 'Actualizar anotación',
+    description: 'Permiso: entries.update',
+  })
   @ApiEnvelopeOk(EntryResponseDto, { example: ENTRY_RESPONSE_EXAMPLE })
   @ApiNotFoundError('Anotación no encontrada')
   @ApiProtectedErrors()
@@ -99,7 +109,10 @@ export class EntriesController {
   @Delete(':id')
   @RequirePermission('entries.delete')
   @ApiParam({ name: 'id', example: '11111111-1111-1111-1111-111111111101' })
-  @ApiOperation({ summary: 'Eliminar anotación', description: 'Permiso: entries.delete' })
+  @ApiOperation({
+    summary: 'Eliminar anotación',
+    description: 'Permiso: entries.delete',
+  })
   @ApiEnvelopeNullOk('Anotación eliminada')
   @ApiNotFoundError('Anotación no encontrada')
   @ApiProtectedErrors()
@@ -114,7 +127,10 @@ export class EntriesController {
   @Post(':id/read')
   @RequirePermission('entries.ack')
   @ApiParam({ name: 'id', example: '11111111-1111-1111-1111-111111111101' })
-  @ApiOperation({ summary: 'Confirmar lectura', description: 'Padre confirma comunicado. Permiso: entries.ack' })
+  @ApiOperation({
+    summary: 'Confirmar lectura',
+    description: 'Padre confirma comunicado. Permiso: entries.ack',
+  })
   @ApiEnvelopeNullOk('Lectura confirmada')
   @ApiNotFoundError('Anotación no encontrada')
   @ApiProtectedErrors()

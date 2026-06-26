@@ -23,7 +23,8 @@ export class SectionsController {
   @RequirePermission('sections.read')
   @ApiOperation({
     summary: 'Listar secciones',
-    description: 'Permiso: sections.read. Alcance según rol (auxiliar ve sus secciones)',
+    description:
+      'Permiso: sections.read. Alcance según rol (auxiliar ve sus secciones)',
   })
   @ApiEnvelopeOk(SectionResponseDto, {
     isArray: true,

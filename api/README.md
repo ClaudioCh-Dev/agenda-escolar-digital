@@ -64,6 +64,16 @@ pnpm db:setup
 
 El script es idempotente (`ON CONFLICT DO NOTHING`); podés volver a ejecutarlo sin romper datos existentes.
 
+**Contenido demo** (alineado a `TODAY = 2026-06-13` en el móvil):
+
+| Dato | Cantidad aprox. |
+|------|-----------------|
+| Anotaciones (`entries`) | 11 (7 el 13/06, historial 11–12/06) |
+| Calendario (`calendar_events`) | 8 eventos (jun–jul 2026) |
+| Notificaciones | 7 (padre + alumno, algunas sin leer) |
+| Chat | 1 conversación auxiliar ↔ padre, 4 mensajes |
+| Acuses de lectura | 3 confirmados; 1 comunicado con `requires_ack` pendiente |
+
 **Logins de demo** (password `demo123`):
 
 | Código | Rol |

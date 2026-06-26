@@ -28,7 +28,10 @@ export class NotificationsController {
 
   @Get()
   @RequirePermission('notifications.read')
-  @ApiOperation({ summary: 'Bandeja de notificaciones', description: 'Permiso: notifications.read' })
+  @ApiOperation({
+    summary: 'Bandeja de notificaciones',
+    description: 'Permiso: notifications.read',
+  })
   @ApiEnvelopeOk(NotificationResponseDto, {
     isArray: true,
     example: [NOTIFICATION_EXAMPLE],

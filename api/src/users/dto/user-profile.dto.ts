@@ -16,7 +16,9 @@ export class UserChildDto {
   @ApiProperty({ example: 'LA' })
   initials!: string;
 
-  @ApiPropertyOptional({ example: 'https://res.cloudinary.com/demo/image/upload/avatar.jpg' })
+  @ApiPropertyOptional({
+    example: 'https://res.cloudinary.com/demo/image/upload/avatar.jpg',
+  })
   avatar?: string;
 }
 
@@ -39,7 +41,9 @@ export class UserProfileDto {
   @ApiProperty({ example: ['auxiliar'] })
   roles!: string[];
 
-  @ApiPropertyOptional({ example: 'https://res.cloudinary.com/demo/image/upload/avatar.jpg' })
+  @ApiPropertyOptional({
+    example: 'https://res.cloudinary.com/demo/image/upload/avatar.jpg',
+  })
   avatar?: string;
 
   @ApiProperty({ example: 'MA' })

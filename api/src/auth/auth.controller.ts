@@ -9,7 +9,6 @@ import { ApiSuccess } from '../shared';
 import {
   ApiEnvelopeCreated,
   ApiEnvelopeNullOk,
-  ApiEnvelopeOk,
   ApiValidationError,
   apiErrorExample,
 } from '../shared/swagger';
@@ -20,10 +19,7 @@ import {
 import { AuthService } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
-import {
-  LoginResponseDto,
-  RefreshResponseDto,
-} from './dto/auth-response.dto';
+import { LoginResponseDto, RefreshResponseDto } from './dto/auth-response.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -36,7 +32,10 @@ export class AuthController {
 
   @Public()
   @Post('login')
-  @ApiOperation({ summary: 'Iniciar sesión', description: 'Login con código (e/t/p…) y contraseña' })
+  @ApiOperation({
+    summary: 'Iniciar sesión',
+    description: 'Login con código (e/t/p…) y contraseña',
+  })
   @ApiEnvelopeCreated(LoginResponseDto, {
     description: 'Tokens JWT y perfil del usuario',
     example: LOGIN_RESPONSE_EXAMPLE,
@@ -54,7 +53,10 @@ export class AuthController {
 
   @Public()
   @Post('refresh')
-  @ApiOperation({ summary: 'Renovar tokens', description: 'Rota refresh token y emite nuevo par access/refresh' })
+  @ApiOperation({
+    summary: 'Renovar tokens',
+    description: 'Rota refresh token y emite nuevo par access/refresh',
+  })
   @ApiEnvelopeCreated(RefreshResponseDto, {
     example: REFRESH_RESPONSE_EXAMPLE,
   })
@@ -62,7 +64,10 @@ export class AuthController {
   @ApiUnauthorizedResponse({
     description: 'Refresh token inválido o reutilizado',
     schema: {
-      example: apiErrorExample('INVALID_REFRESH_TOKEN', 'Invalid refresh token'),
+      example: apiErrorExample(
+        'INVALID_REFRESH_TOKEN',
+        'Invalid refresh token',
+      ),
     },
   })
   async refresh(
@@ -73,7 +78,10 @@ export class AuthController {
 
   @Public()
   @Post('logout')
-  @ApiOperation({ summary: 'Cerrar sesión', description: 'Revoca el refresh token en servidor' })
+  @ApiOperation({
+    summary: 'Cerrar sesión',
+    description: 'Revoca el refresh token en servidor',
+  })
   @ApiEnvelopeNullOk('Sesión cerrada')
   @ApiValidationError()
   async logout(@Body() dto: RefreshTokenDto): Promise<ApiSuccess<null>> {
@@ -83,7 +91,10 @@ export class AuthController {
 
   @Patch('password')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Cambiar contraseña', description: 'Requiere JWT del usuario autenticado' })
+  @ApiOperation({
+    summary: 'Cambiar contraseña',
+    description: 'Requiere JWT del usuario autenticado',
+  })
   @ApiEnvelopeNullOk('Contraseña actualizada')
   @ApiValidationError()
   @ApiUnauthorizedResponse({

@@ -35,7 +35,10 @@ export class ConversationsController {
 
   @Get()
   @RequirePermission('chat.read')
-  @ApiOperation({ summary: 'Listar conversaciones', description: 'Permiso: chat.read' })
+  @ApiOperation({
+    summary: 'Listar conversaciones',
+    description: 'Permiso: chat.read',
+  })
   @ApiEnvelopeOk(ConversationResponseDto, {
     isArray: true,
     example: [CONVERSATION_EXAMPLE],
@@ -67,7 +70,10 @@ export class ConversationsController {
   @Post(':id/messages')
   @RequirePermission('chat.send')
   @ApiParam({ name: 'id', example: '55555555-5555-5555-5555-555555555501' })
-  @ApiOperation({ summary: 'Enviar mensaje', description: 'Permiso: chat.send' })
+  @ApiOperation({
+    summary: 'Enviar mensaje',
+    description: 'Permiso: chat.send',
+  })
   @ApiEnvelopeCreated(MessageResponseDto, { example: MESSAGE_EXAMPLE })
   @ApiNotFoundError('Conversación no encontrada')
   @ApiProtectedErrors()

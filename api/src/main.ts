@@ -20,7 +20,9 @@ async function bootstrap() {
 
   if (isApiDocsEnabled()) {
     setupApiDocs(app);
-    new Logger('Bootstrap').log(`API docs (Scalar): http://localhost:${port}/api`);
+    new Logger('Bootstrap').log(
+      `API docs (Scalar): http://localhost:${port}/api`,
+    );
   }
 
   await app.listen(port);

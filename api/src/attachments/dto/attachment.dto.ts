@@ -14,7 +14,9 @@ export class AttachmentResponseDto {
   @ApiProperty({ enum: ['image', 'pdf', 'word'], example: 'pdf' })
   fileType!: AttachmentFileType;
 
-  @ApiProperty({ example: 'https://res.cloudinary.com/demo/raw/upload/v1/comunicado.pdf' })
+  @ApiProperty({
+    example: 'https://res.cloudinary.com/demo/raw/upload/v1/comunicado.pdf',
+  })
   url!: string;
 
   @ApiPropertyOptional({ example: 'agenda/comunicado' })
@@ -25,7 +27,9 @@ export class UploadAttachmentResponseDto {
   @ApiProperty({ example: 'comunicado.pdf' })
   name!: string;
 
-  @ApiProperty({ example: 'https://res.cloudinary.com/demo/raw/upload/v1/comunicado.pdf' })
+  @ApiProperty({
+    example: 'https://res.cloudinary.com/demo/raw/upload/v1/comunicado.pdf',
+  })
   storageUrl!: string;
 
   @ApiProperty({ example: '245 KB' })

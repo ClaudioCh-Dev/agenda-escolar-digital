@@ -39,10 +39,33 @@ if (!databaseUrl) {
 const sql = readFileSync(resolve(apiRoot, 'database', 'seed-dev.sql'), 'utf8');
 const client = new pg.Client({ connectionString: databaseUrl });
 
+const SUMMARY_SQL = `
+  SELECT
+    (SELECT COUNT(*)::int FROM entries) AS entries,
+    (SELECT COUNT(*)::int FROM calendar_events) AS calendar_events,
+    (SELECT COUNT(*)::int FROM notifications) AS notifications,
+    (SELECT COUNT(*)::int FROM conversations) AS conversations,
+    (SELECT COUNT(*)::int FROM messages) AS messages,
+    (SELECT COUNT(*)::int FROM entry_reads) AS entry_reads
+`;
+
 try {
   await client.connect();
   await client.query(sql);
+
+  const { rows } = await client.query(SUMMARY_SQL);
+  const counts = rows[0];
+
   console.log('seed-dev.sql applied successfully.');
+  console.log('Demo data (TODAY = 2026-06-13 en mobil/src/constants/config.ts):');
+  console.log(`  entries:          ${counts.entries}`);
+  console.log(`  calendar_events:  ${counts.calendar_events}`);
+  console.log(`  notifications:    ${counts.notifications}`);
+  console.log(`  conversations:    ${counts.conversations}`);
+  console.log(`  messages:         ${counts.messages}`);
+  console.log(`  entry_reads:      ${counts.entry_reads}`);
+  console.log('');
+  console.log('Logins: t10000001 | p10000001 | e10000001 — password: demo123');
 } catch (error) {
   console.error('Failed to apply seed-dev.sql:', error);
   process.exit(1);

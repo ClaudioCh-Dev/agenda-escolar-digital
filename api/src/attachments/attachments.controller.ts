@@ -24,7 +24,6 @@ import { ApiSuccess } from '../shared';
 import {
   ApiEnvelopeCreated,
   ApiEnvelopeNullOk,
-  ApiEnvelopeOk,
   ApiNotFoundError,
   ApiProtectedErrors,
 } from '../shared/swagger';
@@ -72,7 +71,8 @@ export class AttachmentsController {
   @ApiBody(fileUploadBody)
   @ApiOperation({
     summary: 'Subir adjunto (staging)',
-    description: 'Sube a Cloudinary sin vincular aún. Permiso: entries.create o calendar.create',
+    description:
+      'Sube a Cloudinary sin vincular aún. Permiso: entries.create o calendar.create',
   })
   @ApiEnvelopeCreated(UploadAttachmentResponseDto, {
     example: UPLOAD_ATTACHMENT_EXAMPLE,
@@ -87,7 +87,10 @@ export class AttachmentsController {
 
   @Delete('staging')
   @RequirePermission('entries.create', 'calendar.create')
-  @ApiOperation({ summary: 'Cancelar adjunto en staging', description: 'Elimina archivo temporal de Cloudinary' })
+  @ApiOperation({
+    summary: 'Cancelar adjunto en staging',
+    description: 'Elimina archivo temporal de Cloudinary',
+  })
   @ApiEnvelopeNullOk('Adjunto staging eliminado')
   @ApiProtectedErrors()
   async cancelStaging(
@@ -101,7 +104,10 @@ export class AttachmentsController {
   @Delete(':id')
   @RequirePermission('entries.update', 'calendar.update')
   @ApiParam({ name: 'id', example: '44444444-4444-4444-4444-444444444401' })
-  @ApiOperation({ summary: 'Eliminar adjunto', description: 'Permiso: entries.update o calendar.update' })
+  @ApiOperation({
+    summary: 'Eliminar adjunto',
+    description: 'Permiso: entries.update o calendar.update',
+  })
   @ApiEnvelopeNullOk('Adjunto eliminado')
   @ApiNotFoundError('Adjunto no encontrado')
   @ApiProtectedErrors()
@@ -126,7 +132,10 @@ export class EntryAttachmentsController {
   @ApiConsumes('multipart/form-data')
   @ApiBody(fileUploadBody)
   @ApiParam({ name: 'id', example: '11111111-1111-1111-1111-111111111101' })
-  @ApiOperation({ summary: 'Adjuntar archivo a anotación', description: 'Permiso: entries.update' })
+  @ApiOperation({
+    summary: 'Adjuntar archivo a anotación',
+    description: 'Permiso: entries.update',
+  })
   @ApiEnvelopeCreated(AttachmentResponseDto, { example: ATTACHMENT_EXAMPLE })
   @ApiNotFoundError('Anotación no encontrada')
   @ApiProtectedErrors()
@@ -153,7 +162,10 @@ export class CalendarAttachmentsController {
   @ApiConsumes('multipart/form-data')
   @ApiBody(fileUploadBody)
   @ApiParam({ name: 'id', example: '22222222-2222-2222-2222-222222222201' })
-  @ApiOperation({ summary: 'Adjuntar archivo a evento', description: 'Permiso: calendar.update' })
+  @ApiOperation({
+    summary: 'Adjuntar archivo a evento',
+    description: 'Permiso: calendar.update',
+  })
   @ApiEnvelopeCreated(AttachmentResponseDto, { example: ATTACHMENT_EXAMPLE })
   @ApiNotFoundError('Evento no encontrado')
   @ApiProtectedErrors()

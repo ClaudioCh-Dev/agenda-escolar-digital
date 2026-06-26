@@ -12,7 +12,10 @@ export class AppController {
 
   @Public()
   @Get()
-  @ApiOperation({ summary: 'Health check', description: 'Verifica que la API responde' })
+  @ApiOperation({
+    summary: 'Health check',
+    description: 'Verifica que la API responde',
+  })
   @ApiEnvelopeDataOk('API en línea', { message: 'Agenda Escolar Digital API' })
   getHello(): ApiSuccess<{ message: string }> {
     return new ApiSuccess({ message: this.appService.getHello() });

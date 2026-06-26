@@ -24,7 +24,8 @@ export class ParentsController {
   @RequirePermission('students.read')
   @ApiOperation({
     summary: 'Listar padres',
-    description: 'Permiso: students.read. Filtros opcionales: section, studentId',
+    description:
+      'Permiso: students.read. Filtros opcionales: section, studentId',
   })
   @ApiEnvelopeOk(ParentResponseDto, {
     isArray: true,

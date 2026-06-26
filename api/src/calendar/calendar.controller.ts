@@ -42,7 +42,10 @@ export class CalendarController {
 
   @Get()
   @RequirePermission('calendar.read')
-  @ApiOperation({ summary: 'Listar eventos', description: 'Permiso: calendar.read. Filtros: from, to, section' })
+  @ApiOperation({
+    summary: 'Listar eventos',
+    description: 'Permiso: calendar.read. Filtros: from, to, section',
+  })
   @ApiEnvelopeOk(CalendarEventResponseDto, {
     isArray: true,
     example: [CALENDAR_EVENT_EXAMPLE],
@@ -71,8 +74,13 @@ export class CalendarController {
 
   @Post()
   @RequirePermission('calendar.create')
-  @ApiOperation({ summary: 'Crear evento', description: 'Permiso: calendar.create' })
-  @ApiEnvelopeCreated(CalendarEventResponseDto, { example: CALENDAR_EVENT_EXAMPLE })
+  @ApiOperation({
+    summary: 'Crear evento',
+    description: 'Permiso: calendar.create',
+  })
+  @ApiEnvelopeCreated(CalendarEventResponseDto, {
+    example: CALENDAR_EVENT_EXAMPLE,
+  })
   @ApiProtectedErrors()
   async create(
     @CurrentUser() auth: AuthenticatedUser,
@@ -84,7 +92,10 @@ export class CalendarController {
   @Patch(':id')
   @RequirePermission('calendar.update')
   @ApiParam({ name: 'id', example: '22222222-2222-2222-2222-222222222201' })
-  @ApiOperation({ summary: 'Actualizar evento', description: 'Permiso: calendar.update' })
+  @ApiOperation({
+    summary: 'Actualizar evento',
+    description: 'Permiso: calendar.update',
+  })
   @ApiEnvelopeOk(CalendarEventResponseDto, { example: CALENDAR_EVENT_EXAMPLE })
   @ApiNotFoundError('Evento no encontrado')
   @ApiProtectedErrors()
@@ -99,7 +110,10 @@ export class CalendarController {
   @Delete(':id')
   @RequirePermission('calendar.delete')
   @ApiParam({ name: 'id', example: '22222222-2222-2222-2222-222222222201' })
-  @ApiOperation({ summary: 'Eliminar evento', description: 'Permiso: calendar.delete' })
+  @ApiOperation({
+    summary: 'Eliminar evento',
+    description: 'Permiso: calendar.delete',
+  })
   @ApiEnvelopeNullOk('Evento eliminado')
   @ApiNotFoundError('Evento no encontrado')
   @ApiProtectedErrors()
